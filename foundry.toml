@@ -8,6 +8,7 @@ out = "artifact"
 # Solidity compiler
 remappings = [
   "forge-std/=library/forge-std/src/",
-  "util/=library/util/"
+  "util/=library/util/",
+  "erc/=library/erc/"
 ]
 deny_warnings = true

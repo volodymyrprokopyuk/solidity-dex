@@ -1,0 +1,83 @@
+* Fungible token
+:PROPERTIES:
+:TOC: :include descendants
+:END:
+
+:CONTENTS:
+- [[#concepts-and-purpose][Concepts and purpose]]
+- [[#interface][Interface]]
+  - [[#events][Events]]
+  - [[#views][Views]]
+  - [[#functions][Functions]]
+:END:
+
+[[https://eips.ethereum.org/EIPS/eip-20][ERC-20 Token standard]]
+
+** Concepts and purpose
+
+- ERC-20 token :: The ERC-20 token standard defines an interface for
+  implementing fungible tokens on Ethereum. All tokens have the same value, are
+  indistinguishable and identical. Tokens can either be initially supplied or
+  incrementally minted. Tokens can also be burned. The token standard allows an
+  owner to transfer tokens to a recipient. The token standard allows an owner to
+  approve a spender to transfer up to the maximum value to a recipient on behalf
+  of the owner. The token standard provides views the check the current total
+  supply of tokens, the balance of an owner, and the remaining value approved by
+  an owner for a spender to transfer
+
+** Interface
+
+*** Events
+
+- Transfer :: The =Transfer= event is emitted on a successful transfer
+  - An owner transfers tokens to a recipient
+  - An approved spender transfers tokens on a recipient on behalf of the owner
+  When new tokens are minted the owner is =0x0=. When existing tokens are burned
+  the recipient is =0x0=
+  #+BEGIN_SRC solidity
+event Transfer(address indexed own, address indexed rcp, uint val);
+  #+END_SRC
+- Approval :: The =Approval= event is emitted on a successful approval
+  - An owner grants a limited permission to a spender to transfer up to a
+    maximum value of tokens on behalf of the owner
+  #+BEGIN_SRC solidity
+event Approval(address indexed own, address indexed spn, uint maxVal);
+  #+END_SRC
+
+*** Views
+
+- Total supply :: The =totalSupply= view returns the total amount of tokens
+  either initially created or incrementally minted, minus the burned tokens
+  #+BEGIN_SRC solidity
+function totalSupply() external view returns (uint totSupp);
+  #+END_SRC
+- Balance :: The =balanceOf= view returns the balance of an owner
+  #+BEGIN_SRC solidity
+function balanceOf(address own) external view (uint bal);
+  #+END_SRC
+- Allowance :: The =allowance= view returns the remaining to spend value value
+  for a spender to transfer on behalf of the owner
+  #+BEGIN_SRC solidity
+function allowance(address own, address spn) external view returns (uint remVal);
+  #+END_SRC
+
+*** Functions
+
+- Transfer :: The =transfer= function allows an owner (=msg.sender=) to transfer
+  tokens to a recipient and emits the =Transfer= event
+  #+BEGIN_SRC solidity
+function transfer(address rcp, uint val) external returns (bool succ);
+  #+END_SRC
+- Approve :: The =approve= function allows an owner (=msg.sender=) to grant a
+  limited permission to a spender to transfer up to the maximum value of tokens
+  on behalf of the owner
+  #+BEGIN_SRC solidity
+function approve(address spn, uint maxVal) external returns (bool succ);
+  #+END_SRC
+- Transfer on behalf :: The =transferFrom= function allows an approved spender
+  (=msg.sender=) spender to transfer tokens on a recipient on behalf of the
+  owner and emits the =Transfer= event
+  #+BEGIN_SRC solidity
+function transferFrom(address own, address rcp, uint val)
+  external view returns (bool succ);
+  #+END_SRC
