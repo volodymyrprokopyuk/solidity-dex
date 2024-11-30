@@ -1,3 +1,3 @@
 * Solidity DEX
 
-- [[/library/erc/FungibleToken.org][Fungible token. ERC-20 Token standard]]
+- [[/erc/FungibleToken.org][Fungible token. ERC-20 Token standard]]

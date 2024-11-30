@@ -11,9 +11,9 @@
   - [[#functions][Functions]]
 :END:
 
-[[https://eips.ethereum.org/EIPS/eip-20][ERC-20 Token standard]]
-
 ** Concepts and purpose
+
+[[https://eips.ethereum.org/EIPS/eip-20][ERC-20 Token standard]]
 
 - ERC-20 token :: The ERC-20 token standard defines an interface for
   implementing fungible tokens on Ethereum. All tokens have the same value, are
@@ -23,7 +23,8 @@
   approve a spender to transfer up to the maximum value to a recipient on behalf
   of the owner. The token standard provides views the check the current total
   supply of tokens, the balance of an owner, and the remaining value approved by
-  an owner for a spender to transfer
+  an owner for a spender to transfer. Minting and burning of tokens is not
+  specified by the token standard
 
 ** Interface
 
@@ -78,6 +79,6 @@ function approve(address spn, uint maxVal) external returns (bool succ);
   (=msg.sender=) spender to transfer tokens on a recipient on behalf of the
   owner and emits the =Transfer= event
   #+BEGIN_SRC solidity
-function transferFrom(address own, address rcp, uint val)
-  external view returns (bool succ);
+function transferFrom(address own, address rcp, uint val) external
+  returns (bool succ);
   #+END_SRC
