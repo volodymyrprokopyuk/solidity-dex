@@ -34,15 +34,12 @@ contract TokenExchange is Base, FungibleToken {
   }
 
   function depositLiquidity(uint maxTok, uint minLiq) external payable
-    // positive(msg.value) positive(maxTok) positive(minLiq)
     returns (uint) {
-
-    require(msg.value > 0);
-    require(maxTok > 0);
-    require(minLiq > 0);
-
-    (address dps, address exch) = (msg.sender, address(this));
     uint valEth = msg.value;
+    require(valEth > 0, Base.ErrNonPositive(valEth));
+    require(maxTok > 0, Base.ErrNonPositive(maxTok));
+    require(minLiq > 0, Base.ErrNonPositive(minLiq));
+    (address dps, address exch) = (msg.sender, address(this));
     // Current reserves
     uint resEth = exch.balance - valEth;
     uint resTok = token.balanceOf(exch);
@@ -68,8 +65,10 @@ contract TokenExchange is Base, FungibleToken {
   }
 
   function withdrawLiquidity(uint minEth, uint minTok, uint valLiq) external
-    // positive(minEth) positive(minTok) positive(valLiq)
     returns (uint, uint) {
+    require(minEth > 0, Base.ErrNonPositive(minEth));
+    require(minTok > 0, Base.ErrNonPositive(minTok));
+    require(valLiq > 0, Base.ErrNonPositive(valLiq));
     (address wdr, address exch) = (msg.sender, address(this));
     // Current reserves
     uint resEth = exch.balance;
@@ -88,5 +87,17 @@ contract TokenExchange is Base, FungibleToken {
     (success, ) = wdr.call{value: valEth}(""); // Withdraw ETH for wdr
     require(success, ErrEtherWithdraw(exch, wdr, valEth));
     return (valEth, valTok);
+  }
+
+  // inPriceEthTok(sellEth) buyTok
+  // outPriceEthTok(buyTok) sellEth
+  // inPriceTokEth(sellTok) buyEth
+  // outPriceTokEth(buyEth) sellTok
+
+  function inPriceEthTok(uint sellEth) external view
+    positive(sellEth) returns (uint buyTok) {
+    address exch = address(this);
+    uint resEth = exch.balance;
+    uint resTok = token.balanceOf(exch);
   }
 }
