@@ -13,14 +13,62 @@
         font-style: normal;
       }
     </style>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   </head>
   <body>
     <h1>Uniswap v1 mathematical background</h1>
-    <p><strong>Uniswap</strong> v1 <em>mathematical</em> background</p>
+
+    <h2>Constant Product Market Maker CPMM</h2>
     <p>
-      When \(a \ne 0\), there are two solutions to \(ax^2 + bx + c = 0\) and
-      they are \[x = {-b \pm \sqrt{b^2-4ac} \over 2a}.\]
+      The <strong>product of reserves</strong> of a token X e.g. ETH and a token
+      Y e.g. TOK hold on a Decentralized Exchange DEX is constant at all times
+      \[xy = k\] where \(x\) is the reserve of the token X, \(y\) is the reserve
+      of the token Y, and \(k\) is a constant
     </p>
-    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <p>
+      The <strong>product of reserves after a trade</strong> is equal to the
+      product of reservers before a trade \[(x + \Delta x)(y - \Delta y) = xy\]
+      where \(\Delta x\) is the value of the token X sold, and \(\Delta y\) is
+      the value of the token Y bought by a trader from the exchange
+    </p>
+    <p>
+      Let \(\alpha\) and \(\beta\) be <strong>portions of the sold and bought
+      values</strong> against the corresponding reserves on the exchange begore
+      the trade \[\alpha = \frac{\Delta x}{x}\] \[\beta = \frac{\Delta y}{y}\]
+    </p>
+    <p>
+      The <strong>input reserve after a trade</strong>
+      \[x + \Delta x = (1 + \alpha)x = \frac{1}{1 - \beta}x\]
+    </p>
+    <p>
+      The <strong>output resere after a trade</strong>
+      \[y - \Delta y = (1 - \beta)y = \frac{1}{1 + \alpha}y\]
+    </p>
+    <p>
+      The <strong>sold value</strong> by a trader to the exchange
+      \[\Delta x = \frac{x - x + \beta x}{1 - \beta} = \frac{\beta}{1 - \beta}x\]
+    </p>
+    <p>
+      The <strong>bought value</strong> by a trader to the exchange
+      \[\Delta y = \frac{y + \alpha y - y}{1 + \alpha} = \frac{\alpha}{1 + \alpha}y\]
+    </p>
+
+    <h2>Trade fee</h2>
+    <p>
+      The <strong>trade fee</strong> \(0 \le \rho \lt 1\) is taken from the sold
+      value \(\Delta x\). The <strong>portion of the value without the
+      fee</strong> \[\gamma = 1 - \rho\]
+    </p>
+    <p>
+      The <strong>product of reserves after a trade with the fee</strong> is
+      equal to the product of reservers before a trade
+      \[(x + \Delta x \gamma)(y - \Delta y) = xy\]
+    </p>
+    <p>
+      The <strong>sold value with the fee</strong>
+      \[x + \Delta x \gamma = \frac{1}{1 - \beta}x\]
+      \[\Delta x \gamma = \frac{x - x + \beta x}{1 - \beta} = \frac{\beta}{1 - \beta}x\]
+      \[\Delta x = \frac{\beta}{1 - \beta}\frac{1}{\gamma}x\]
+    </p>
   </body>
 </html>
