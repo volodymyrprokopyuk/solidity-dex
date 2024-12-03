@@ -14,19 +14,17 @@ contract ExchangeFactory is Base {
 
   error ErrExchangeExists(bool exists, address tok);
 
-  modifier exchangeExists(bool exists, address tok) {
+  function exchangeExists(bool exists, address tok) internal view {
     if (exists && tokenExchange[tok] == address(0)) {
       revert ErrExchangeExists(false, tok);
     }
     if (!exists && tokenExchange[tok] != address(0)) {
       revert ErrExchangeExists(true, tok);
     }
-    _;
   }
 
-  function createExchange(address tok)
-    external validAddress(tok) exchangeExists(false, tok)
-    returns (address) {
+  function createExchange(address tok) external returns (address) {
+    validAddress(tok); exchangeExists(false, tok);
     TokenExchange exch = new TokenExchange(tok, feePermille);
     address exchAddr = address(exch);
     tokenExchange[tok] = exchAddr;

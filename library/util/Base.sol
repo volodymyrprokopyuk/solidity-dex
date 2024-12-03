@@ -1,24 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.28;
 
-contract Base {
+abstract contract Base {
   error ErrNonPositive(uint val);
   error ErrInvalidAddress(address addr);
   error ErrUnauthorized(address addr);
 
-  modifier positive(uint val) {
+  function positive(uint val) internal pure {
     require(val > 0, ErrNonPositive(val));
-    _;
   }
 
-  modifier validAddress(address addr) {
+  function validAddress(address addr) internal view {
     require(addr != address(0), ErrInvalidAddress(addr));
     require(addr != address(this), ErrInvalidAddress(addr));
-    _;
   }
 
-  modifier only(address addr) {
+  function only(address addr) internal view {
     require(msg.sender == addr, ErrUnauthorized(addr));
-    _;
   }
 }

@@ -31,14 +31,12 @@ abstract contract FungibleToken is IFungibleToken, Base {
   error ErrInsufficientFunds(address own, uint val);
   error ErrBeyondAllowance(address own, address spn, uint val);
 
-  modifier sufficientFunds(address own, uint val) {
+  function sufficientFunds(address own, uint val) internal view {
     require(balanceOf[own] >= val, ErrInsufficientFunds(own, val));
-    _;
   }
 
-  modifier withinAllowance(address own, address spn, uint val) {
+  function withinAllowance(address own, address spn, uint val) internal view {
     require(allowance[own][spn] >= val, ErrBeyondAllowance(own, spn, val));
-    _;
   }
 
   constructor(
@@ -49,30 +47,28 @@ abstract contract FungibleToken is IFungibleToken, Base {
     totalSupply = initSupp;
   }
 
-  function transfer(address rcp, uint val) external
-    validAddress(rcp) sufficientFunds(msg.sender, val)
-    returns (bool succ) {
+  function transfer(address rcp, uint val) external returns (bool succ) {
     address own = msg.sender;
+    validAddress(rcp); sufficientFunds(own, val);
     balanceOf[own] -= val;
     balanceOf[rcp] += val;
     emit Transfer(own, rcp, val);
     return true;
   }
 
-  function approve(address spn, uint maxVal) external
-    validAddress(spn) sufficientFunds(msg.sender, maxVal)
-    returns (bool succ) {
+  function approve(address spn, uint maxVal) external returns (bool succ) {
     address own = msg.sender;
+    validAddress(spn); sufficientFunds(own, maxVal);
     allowance[own][spn] = maxVal;
     emit Approval(own, spn, maxVal);
     return true;
   }
 
   function transferFrom(address own, address rcp, uint val) external
-    validAddress(own) validAddress(rcp) withinAllowance(own, msg.sender, val)
-    sufficientFunds(own, val)
     returns (bool succ) {
     address spn = msg.sender;
+    validAddress(own); validAddress(rcp);
+    withinAllowance(own, spn, val); sufficientFunds(own, val);
     allowance[own][spn] -= val;
     balanceOf[own] -= val;
     balanceOf[rcp] += val;
@@ -80,18 +76,16 @@ abstract contract FungibleToken is IFungibleToken, Base {
     return true;
   }
 
-  function mint(address rcp, uint val) internal
-    validAddress(rcp) only(owner)
-    returns (bool succ) {
+  function mint(address rcp, uint val) internal returns (bool succ) {
+    validAddress(rcp); only(owner);
     balanceOf[rcp] += val;
     totalSupply += val;
     emit Transfer(address(0), rcp, val);
     return true;
   }
 
-  function burn(address own, uint val) internal
-    only(owner) sufficientFunds(own, val)
-    returns (bool succ) {
+  function burn(address own, uint val) internal returns (bool succ) {
+    only(owner); sufficientFunds(own, val);
     balanceOf[own] -= val;
     totalSupply -= val;
     emit Transfer(own, address(0), val);
