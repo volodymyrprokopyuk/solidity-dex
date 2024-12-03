@@ -8,6 +8,7 @@ contract ExchangeFactory is Base {
   mapping(address tok => address exch) public tokenExchange;
   mapping(address exch => address tok) public exchangeToken;
   uint public exchanges;
+  uint feePermille = 3;
 
   event EvCreateExchange(address exch, address tok);
 
@@ -26,7 +27,7 @@ contract ExchangeFactory is Base {
   function createExchange(address tok)
     external validAddress(tok) exchangeExists(false, tok)
     returns (address) {
-    TokenExchange exch = new TokenExchange(tok);
+    TokenExchange exch = new TokenExchange(tok, feePermille);
     address exchAddr = address(exch);
     tokenExchange[tok] = exchAddr;
     exchangeToken[exchAddr] = tok;

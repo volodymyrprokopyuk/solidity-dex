@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Uniswap v1 price</title>
+    <meta name="description" content="Uniswap v1 mathematical background">
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+      body {
+        font-family: "Noto Sans", sans-serif;
+        font-weight: 300;
+        font-style: normal;
+      }
+    </style>
+    <script>
+     MathJax = {
+       tex: {
+         tags: "ams"
+       }
+     }
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  </head>
+  <body>
+    <h1>Uniswap v1 price</h1>
+
+    <h2>Constant Product Market Maker CPMM</h2>
+    <p>
+      The <strong>product of reserves</strong> of a token X e.g. ETH and a token
+      Y e.g. TOK hold on a Decentralized Exchange DEX is constant at all times
+      \begin{equation}xy = k\end{equation}
+      where \(x\) is the reserve of the token X, \(y\) is the reserve of the
+      token Y, and \(k\) is a constant
+    </p>
+    <p>
+      The <strong>product of reserves after a trade</strong> is equal to the
+      product of reserves before a trade
+      \begin{equation}(x + \Delta x)(y - \Delta y) = xy\end{equation}
+      where \(\Delta x\) is the value of the token X sold, and \(\Delta y\) is
+      the value of the token Y bought by a trader from the exchange
+    </p>
+    <p>
+      Let \(\alpha\) and \(\beta\) be <strong>portions of the sold and bought
+      values</strong> against the corresponding reserves on the exchange begore
+      the trade \[\alpha = \frac{\Delta x}{x}\] \[\beta = \frac{\Delta y}{y}\]
+    </p>
+    <p>
+      The <strong>input reserve after a trade</strong>
+      \[x + \Delta x = (1 + \alpha)x = \frac{1}{1 - \beta}x\]
+    </p>
+    <p>
+      The <strong>output resere after a trade</strong>
+      \[y - \Delta y = (1 - \beta)y = \frac{1}{1 + \alpha}y\]
+    </p>
+    <p>
+      The <strong>sold value</strong> by a trader to the exchange
+      \begin{equation}
+        \Delta x = \frac{x - x + \beta x}{1 - \beta} = \frac{\beta}{1 - \beta}x
+      \end{equation}
+    </p>
+    <p>
+      The <strong>bought value</strong> by a trader to the exchange
+      \begin{equation}
+        \Delta y = \frac{y + \alpha y - y}{1 + \alpha} =
+        \frac{\alpha}{1 + \alpha}y
+      \end{equation}
+    </p>
+
+    <h2>Trade fee</h2>
+    <p>
+      The <strong>trade fee</strong> \(0 \le \rho \lt 1\) is taken from the sold
+      value \(\Delta x\). The <strong>portion of the value without a
+      fee</strong> \[\gamma = 1 - \rho\]
+    </p>
+    <p>
+      The <strong>product of reserves after a trade with a fee</strong> is
+      equal to the product of reserves before a trade
+      \begin{equation}(x + \Delta x \gamma)(y - \Delta y) = xy\end{equation}
+    </p>
+    <p>
+      The <strong>sold value with a fee</strong>
+      \[x + \Delta x \gamma = \frac{1}{1 - \beta}x\]
+      \[\Delta x \gamma = \frac{x - x + \beta x}{1 - \beta} =
+      \frac{\beta}{1 - \beta}x\]
+      \begin{equation}
+        \Delta x = \frac{\beta}{1 - \beta}\frac{1}{\gamma}x
+      \end{equation}
+    </p>
+    <p>
+      Given the fixed value to buy \(\Delta y\), the <strong>output price with a
+      fee</strong> \(\Delta x(\Delta y, x, y)\) calculates the corresponding
+      value to sell \(\Delta x\)
+      \[
+        \Delta x(\Delta y, x, y) = \frac{\beta}{1 - \beta}\frac{1}{\gamma}x =
+        \frac{\frac{\Delta y}{y}}{1 - \frac{\Delta y}{y}}\frac{1}{\gamma}x =
+        \frac{\Delta y}{(y - \Delta y)\gamma}x
+      \]
+    </p>
+    <p>
+      If \(\rho = 0.03\%\), then \(\gamma = 1 - \rho = \frac{997}{1000}\). The
+      <strong>output price with the fee</strong>
+      \[\Delta x(\Delta y, x, y) = \frac{1000 \Delta y}{997(y - \Delta y)}x\]
+    </p>
+    <p>
+      The <strong>input reserve after a trade with a fee</strong>
+      \[
+        x + \Delta x = x + \frac{\beta}{1 - \beta}\frac{1}{\gamma}x =
+        (1 + \frac{\beta}{1 - \beta}\frac{1}{\gamma})x =
+        \frac{(1 - \beta) \gamma + \beta}{(1 - \beta) \gamma}x =
+        \frac{1 - \beta + \frac{\beta}{\gamma}}{1 - \beta}x =
+        \frac{1 + \beta (\frac{1}{\gamma} - 1)}{1 - \beta}x
+      \]
+    </p>
+    <p>
+      The <strong>output reserve after a trade with a fee</strong>
+      \[y - \Delta y = (1 - \beta)y = \frac{1}{1 + \alpha \gamma}y\]
+    </p>
+    <p>
+      The <strong>bought value with a fee</strong>
+      \begin{equation}
+        \Delta y = y - \frac{1}{1 + \alpha \gamma}y =
+        \frac{y + \alpha \gamma y - y}{1 + \alpha \gamma} =
+        \frac{\alpha \gamma}{1 + \alpha \gamma}y
+      \end{equation}
+    </p>
+    <p>
+      Given the fixed value to sell \(\Delta x\), the <strong>input price with a
+      fee</strong> \(\Delta y(\Delta x, x, y)\) calculates the corresponding
+      value to buy \(\Delta y\)
+      \[
+        \Delta y(\Delta x, x, y) = \frac{\alpha \gamma}{1 + \alpha \gamma}y =
+        \frac{\frac{\Delta x}{x} \gamma}{1 + \frac{\Delta x}{x} \gamma}y =
+        \frac{\Delta x \gamma}{x + \Delta x \gamma}y
+      \]
+    </p>
+    <p>
+      If \(\rho = 0.03\%\), then \(\gamma = 1 - \rho = \frac{997}{1000}\). The
+      <strong>input price with the fee</strong>
+      \[
+        \Delta y(\Delta x, x, y) =
+        \frac{\Delta x \frac{997}{1000}}{x + \Delta x \frac{997}{1000}}y =
+        \frac{997 \Delta x}{1000 x + 997 \Delta x}y
+      \]
+    </p>
+  </body>
+</html>
