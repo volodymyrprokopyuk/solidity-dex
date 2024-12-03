@@ -26,7 +26,7 @@ abstract contract FungibleToken is IFungibleToken, Base {
 
   uint public totalSupply;
   mapping(address own => uint bal) public balanceOf;
-  mapping(address own => mapping(address spn => uint maxVal)) public allowance;
+  mapping(address own => mapping(address spn => uint remVal)) public allowance;
 
   error ErrInsufficientFunds(address own, uint val);
   error ErrBeyondAllowance(address own, address spn, uint val);

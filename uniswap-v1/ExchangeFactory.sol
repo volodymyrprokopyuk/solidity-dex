@@ -8,9 +8,9 @@ contract ExchangeFactory is Base {
   mapping(address tok => address exch) public tokenExchange;
   mapping(address exch => address tok) public exchangeToken;
   uint public exchanges;
-  uint feePermille = 3;
+  uint internal feePermille = 3; // 0.3% fee
 
-  event EvCreateExchange(address exch, address tok);
+  event EvExchangeCreate(address exch, address tok);
 
   error ErrExchangeExists(bool exists, address tok);
 
@@ -30,7 +30,7 @@ contract ExchangeFactory is Base {
     tokenExchange[tok] = exchAddr;
     exchangeToken[exchAddr] = tok;
     exchanges++;
-    emit EvCreateExchange(exchAddr, tok);
+    emit EvExchangeCreate(exchAddr, tok);
     return exchAddr;
   }
 }

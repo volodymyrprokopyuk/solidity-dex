@@ -37,7 +37,7 @@ contract TokenExchange is Base, FungibleToken {
   error ErrLiquidityBurn(address exch, address wdr, uint val);
   error ErrTokenWithdraw(address exch, address wdr, uint val);
   error ErrEtherWithdraw(address exch, address wdr, uint val);
-  // Token swap
+  // Swap tokens
   error ErrTokenSwap(address exch, address rcp, uint val);
   error ErrEtherAboveMax(address exch, address byr, uint val, uint max);
   error ErrEtherRefund(address exch, address byr, uint val);
@@ -55,11 +55,9 @@ contract TokenExchange is Base, FungibleToken {
     returns (uint, uint) {
     (address dps, address exch) = (msg.sender, address(this));
     uint valEth = msg.value;
-    // Current reserves
     uint resEth = exch.balance - valEth;
     uint resTok = token.balanceOf(exch);
     uint resLiq = totalSupply;
-    // Actual values
     uint valTok;
     uint valLiq;
     if (resLiq == 0) {
@@ -79,7 +77,7 @@ contract TokenExchange is Base, FungibleToken {
     returns (uint) {
     (address dps, address exch) = (msg.sender, address(this));
     uint valEth = msg.value; // ETH already deposited for the exchange
-    positive(msg.value); positive(maxTok); positive(minLiq);
+    positive(valEth); positive(maxTok); positive(minLiq);
     (uint valTok, uint valLiq) = liquidityDeposit(maxTok, minLiq);
     bool success = mint(dps, valLiq); // Mint LIQ for the depositor
     require(success, ErrLiquidityMint(exch, dps, valLiq));
@@ -90,15 +88,12 @@ contract TokenExchange is Base, FungibleToken {
   }
 
   function liquidityWithdrawal(uint minEth, uint minTok, uint valLiq)
-    internal view
-    returns (uint, uint) {
+    internal view returns (uint, uint) {
     (address wdr, address exch) = (msg.sender, address(this));
-    // Current reserves
     uint resEth = exch.balance;
     uint resTok = token.balanceOf(exch);
     uint resLiq = totalSupply;
     require(valLiq <= resLiq, ErrLiquidityAboveTotal(exch, wdr, valLiq, resLiq));
-    // Actual values
     uint valEth = valLiq * resEth / resLiq;
     require(valEth >= minEth, ErrEtherBelowMin(exch, wdr, valEth, minEth));
     uint valTok = valLiq * resTok / resLiq;
@@ -121,16 +116,14 @@ contract TokenExchange is Base, FungibleToken {
     return (valEth, valTok);
   }
 
-  function inPrice(uint valIn, uint resIn, uint resOut)
-    internal view
+  function inPrice(uint valIn, uint resIn, uint resOut) internal view
     returns (uint) {
     uint feeValIn = fee * valIn;
     uint valOut = feeValIn * resOut / (1000 * resIn + feeValIn);
     return valOut;
   }
 
-  function outPrice(uint valOut, uint resIn, uint resOut)
-    internal view
+  function outPrice(uint valOut, uint resIn, uint resOut) internal view
     returns (uint) {
     uint valIn = 1000 * valOut * resIn / fee * (resOut - valOut);
     return valIn;
@@ -186,8 +179,8 @@ contract TokenExchange is Base, FungibleToken {
     return outSwapToEthTok(valTok, byr);
   }
 
-  function inSwapToTokEth(uint valTok, uint minEth, address rcp)
-    public returns (uint) {
+  function inSwapToTokEth(uint valTok, uint minEth, address rcp) public
+    returns (uint) {
     positive(valTok); positive(minEth); validAddress(rcp);
     (address sel, address exch) = (msg.sender, address(this));
     uint resEth = exch.balance;
@@ -208,8 +201,8 @@ contract TokenExchange is Base, FungibleToken {
     return inSwapToTokEth(valTok, minEth, sel);
   }
 
-  function outSwapToTokEth(uint maxTok, uint valEth, address rcp)
-    public returns (uint) {
+  function outSwapToTokEth(uint maxTok, uint valEth, address rcp) public
+    returns (uint) {
     positive(maxTok); positive(valEth); validAddress(rcp);
     (address sel, address exch) = (msg.sender, address(this));
     uint resEth = exch.balance;
