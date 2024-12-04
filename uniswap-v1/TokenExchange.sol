@@ -44,7 +44,7 @@ contract TokenExchange is Base, FungibleToken {
   error ErrEtherSend(address exch, address rcp, uint val);
 
   constructor(address tok, uint feePermille)
-    FungibleToken(msg.sender, 0, "Liquidity token", "LIQ", 0) {
+    FungibleToken(address(this), 0, "Liquidity token", "LIQ", 0) {
     validAddress(address(tok));
     factory = msg.sender;
     token = IFungibleToken(tok);

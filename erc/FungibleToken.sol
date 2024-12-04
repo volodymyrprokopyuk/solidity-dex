@@ -77,7 +77,7 @@ abstract contract FungibleToken is IFungibleToken, Base {
   }
 
   function mint(address rcp, uint val) internal returns (bool succ) {
-    validAddress(rcp); only(owner);
+    validAddress(rcp);
     balanceOf[rcp] += val;
     totalSupply += val;
     emit Transfer(address(0), rcp, val);
@@ -85,7 +85,7 @@ abstract contract FungibleToken is IFungibleToken, Base {
   }
 
   function burn(address own, uint val) internal returns (bool succ) {
-    only(owner); sufficientFunds(own, val);
+    sufficientFunds(own, val);
     balanceOf[own] -= val;
     totalSupply -= val;
     emit Transfer(own, address(0), val);
