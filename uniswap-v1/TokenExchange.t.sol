@@ -146,4 +146,56 @@ contract TokenExchangeTest is Test {
     assertEq(owner.balance, ownEth - valEth - valEth2); // Owner ETH
     assertEq(token.balanceOf(owner), valTok + valTok2); // Owner TOK
   }
+
+  function testInSwapTokEth() public {
+    depositLiquidity();
+    uint ownTok = 200;
+    fundToken(owner, exchAddr, ownTok);
+    // In swap eth: 40 => 28, tok: 80
+    uint valTok = 80;
+    uint minEth = 28;
+    vm.expectEmit(true, true, true, true);
+    emit TokenExchange.EvTokenSell(exchAddr, owner, owner, valTok, minEth);
+    vm.prank(owner);
+    uint valEth = exchange.inSwapTokEth(valTok, minEth);
+    assertGe(valEth, minEth);
+    assertEq(owner.balance, valEth); // Owner ETH
+    assertEq(token.balanceOf(owner), ownTok - valTok); // Owner TOK
+    // In swap eth: 28 => 15, tok: 80
+    uint valTok2 = 80;
+    uint minEth2 = 15;
+    vm.expectEmit(true, true, true, true);
+    emit TokenExchange.EvTokenSell(exchAddr, owner, owner, valTok2, minEth2);
+    vm.prank(owner);
+    uint valEth2 = exchange.inSwapTokEth(valTok2, minEth2);
+    assertGe(valEth2, minEth2);
+    assertEq(owner.balance, valEth + valEth2); // Owner ETH
+    assertEq(token.balanceOf(owner), ownTok - valTok - valTok2); // Owner TOK
+  }
+
+  function testOutSwapTokEth() public {
+    depositLiquidity();
+    uint ownTok = 900;
+    fundToken(owner, exchAddr, ownTok);
+    // Out swap eth: 40, tok: 80 => 133
+    uint valEth = 40;
+    uint maxTok = 133;
+    vm.expectEmit(true, true, true, true);
+    emit TokenExchange.EvTokenSell(exchAddr, owner, owner, maxTok, valEth);
+    vm.prank(owner);
+    uint valTok = exchange.outSwapTokEth(maxTok, valEth);
+    assertLe(valTok, maxTok);
+    assertEq(owner.balance, valEth); // Owner ETH
+    assertEq(token.balanceOf(owner), ownTok - maxTok); // Owner Eth
+    // Out swap eth: 40, tok: 133 => 668
+    uint valEth2 = 40;
+    uint maxTok2 = 668;
+    vm.expectEmit(true, true, true, true);
+    emit TokenExchange.EvTokenSell(exchAddr, owner, owner, maxTok2, valEth2);
+    vm.prank(owner);
+    uint valTok2 = exchange.outSwapTokEth(maxTok2, valEth2);
+    assertLe(valTok2, maxTok2);
+    assertEq(owner.balance, valEth + valEth2); // Owner ETH
+    assertEq(token.balanceOf(owner), ownTok - maxTok - maxTok2); // Owner Eth
+  }
 }
