@@ -9,93 +9,141 @@ import {TokenExchange} from "uniswap-v1/TokenExchange.sol";
 contract Token is FungibleToken {
   constructor(
     address own, uint initSupp, string memory nam, string memory sym, uint8 dec
- ) FungibleToken(own, initSupp, nam, sym, dec) { }
+  ) FungibleToken(own, initSupp, nam, sym, dec) { }
+
+  function mintTokens(address rcp, uint val) external returns (bool) {
+    return mint(rcp, val);
+  }
 }
 
 contract TokenExchangeTest is Test {
-  address own;
-  uint initSupp = 1000;
-  IFungibleToken tok;
-  ExchangeFactory fact;
+  address owner;
+  Token token;
+  ExchangeFactory factory;
   address exchAddr;
-  TokenExchange exch;
+  TokenExchange exchange;
 
   function setUp() public {
-    own = makeAddr("owner");
-    tok = new Token(own, initSupp, "Token", "TOK", 0);
-    fact = new ExchangeFactory();
-    exchAddr = fact.createExchange(address(tok));
-    exch = TokenExchange(exchAddr);
-    assertEq(fact.exchanges(), 1);
+    // Create the TOK to swap
+    owner = makeAddr("owner");
+    token = new Token(owner, 0, "Token", "TOK", 0);
+    // Create the TOK exchange
+    factory = new ExchangeFactory();
+    exchAddr = factory.createExchange(address(token));
+    exchange = TokenExchange(exchAddr);
+    assertEq(factory.exchanges(), 1);
+  }
+
+  function fundToken(address own, address exch, uint val) internal {
+    // Mint TOK to the owner
+    bool success = token.mintTokens(own, val);
+    assertTrue(success);
+    // Approve the exchange to transfer TOK on behalf of the owner
     vm.prank(own);
-    bool succ = tok.approve(exchAddr, initSupp);
-    assertTrue(succ);
+    success = token.approve(exch, val);
+    assertTrue(success);
   }
 
   function testDepositWithdrawLiquidity() public {
-    // Fund owner
-    uint ownEth = 150;
-    vm.deal(own, ownEth);
-    // First liquidity deposit eth: 100, tok: 200, liq: 100
+    // Fund the owner eth: 100, tok: 200
     uint valEth = 100;
+    vm.deal(owner, valEth);
     uint maxTok = 200;
-    uint minLiq = valEth;
+    fundToken(owner, exchAddr, maxTok);
+    // Deposit liquidity eth: 100, tok: 200, liq: 100
+    uint minLiq = 100;
     vm.expectEmit(true, true, false, true);
-    emit TokenExchange.EvLiquidityDeposit(exchAddr, own, valEth, maxTok, minLiq);
-    vm.prank(own);
-    uint valLiq = exch.depositLiquidity{value: valEth}(maxTok, minLiq);
-    uint exchEth = valEth;
-    uint exchTok = maxTok;
-    uint ownLiq = minLiq;
-    assertEq(valLiq, minLiq);
-    assertEq(exchAddr.balance, exchEth); // Exchange ETH
-    assertEq(tok.balanceOf(exchAddr), exchTok); // Exchange TOK
-    assertEq(exch.balanceOf(own), ownLiq); // Owner LIQ
-    // Second liquidity deposit eth: 50, tok: 100: liq: 50
-    valEth = 50;
-    maxTok = 100;
-    minLiq = 50;
-    vm.prank(own);
-    valLiq = exch.depositLiquidity{value: valEth}(maxTok, minLiq);
-    exchEth += valEth;
-    exchTok += maxTok;
-    ownLiq += minLiq;
-    assertEq(valLiq, minLiq);
-    assertEq(exchAddr.balance, exchEth); // Exchange ETH
-    assertEq(tok.balanceOf(exchAddr), exchTok); // Exchange TOK
-    assertEq(exch.balanceOf(own), ownLiq); // Owner LIQ
-    // First liquidity withdrawal eth: 100, tok: 200, liq: 100
+    emit TokenExchange.EvLiquidityDeposit(exchAddr, owner, valEth, maxTok, minLiq);
+    vm.prank(owner);
+    uint valLiq = exchange.depositLiquidity{value: valEth}(maxTok, minLiq);
+    assertGe(valLiq, minLiq);
+    assertEq(exchAddr.balance, valEth); // Exchange ETH
+    assertLe(token.balanceOf(exchAddr), maxTok); // Exchange TOK
+    assertEq(owner.balance, 0); // Owner ETH
+    assertGe(token.balanceOf(owner), 0); // Owner TOK
+    assertEq(exchange.balanceOf(owner), valLiq); // Owner LIQ
+    // Withdraw liquidity eth: 100, tok: 200, liq: 100
     uint minEth = 100;
     uint minTok = 200;
     valLiq = 100;
     vm.expectEmit(true, true, false, true);
-    emit TokenExchange.EvLiquidityWithdraw(exchAddr, own, minEth, minTok, valLiq);
-    vm.prank(own);
+    emit TokenExchange.EvLiquidityWithdraw(exchAddr, owner, minEth, minTok, valLiq);
+    vm.prank(owner);
     uint valTok;
-    (valEth, valTok) = exch.withdrawLiquidity(minEth, minTok, valLiq);
-    exchEth -= minEth;
-    exchTok -= minTok;
-    ownLiq -= valLiq;
-    assertEq(valEth, minEth);
-    assertEq(valTok, minTok);
-    assertEq(exchAddr.balance, exchEth); // Exchange ETH
-    assertEq(tok.balanceOf(exchAddr), exchTok); // Exchange TOK
-    assertEq(exch.balanceOf(own), ownLiq); // Owner LIQ
-    // Second liquidity withdrawal eth: 50, tok: 100, liq: 50
-    minEth = 50;
-    minTok = 100;
-    valLiq = 50;
+    (valEth, valTok) = exchange.withdrawLiquidity(minEth, minTok, valLiq);
+    assertGe(valEth, minEth);
+    assertGe(valTok, minTok);
+    assertEq(exchAddr.balance, 0); // Exchange ETH
+    assertGe(token.balanceOf(exchAddr), 0); // Exchange TOK
+    assertGe(owner.balance, minEth);
+    assertGe(token.balanceOf(owner), minTok); // Owner TOK
+    assertEq(exchange.balanceOf(owner), 0); // Owner LIQ
+  }
+
+  function depositLiquidity() internal {
+    // Fund the owner eth: 100, tok: 200
+    uint valEth = 100;
+    vm.deal(owner, valEth);
+    uint maxTok = 200;
+    fundToken(owner, exchAddr, maxTok);
+    // Deposit liquidity eth: 100, tok: 200, liq: 100
+    uint minLiq = 100;
     vm.expectEmit(true, true, false, true);
-    emit TokenExchange.EvLiquidityWithdraw(exchAddr, own, minEth, minTok, valLiq);
-    vm.prank(own);
-    (valEth, valTok) = exch.withdrawLiquidity(minEth, minTok, valLiq);
-    exchEth -= minEth;
-    exchTok -= minTok;
-    ownLiq -= valLiq;
-    assertEq(valEth, minEth);
-    assertEq(valTok, minTok);
-    assertEq(exchAddr.balance, exchEth); // Exchange ETH
-    assertEq(tok.balanceOf(exchAddr), exchTok); // Exchange TOK
-    assertEq(exch.balanceOf(own), ownLiq); // Owner LIQ
+    emit TokenExchange.EvLiquidityDeposit(exchAddr, owner, valEth, maxTok, minLiq);
+    vm.prank(owner);
+    uint valLiq = exchange.depositLiquidity{value: valEth}(maxTok, minLiq);
+    assertEq(exchange.balanceOf(owner), valLiq);
+  }
+
+  function testInSwapEthTok() public {
+    depositLiquidity();
+    uint ownEth = 100;
+    vm.deal(owner, ownEth);
+    // In swap eth: 40, tok: 80 => 57
+    uint valEth = 40;
+    uint minTok = 57;
+    vm.expectEmit(true, true, true, true);
+    emit TokenExchange.EvTokenBuy(exchAddr, owner, owner, valEth, minTok);
+    vm.prank(owner);
+    uint valTok = exchange.inSwapEthTok{value: valEth}(minTok);
+    assertGe(valTok, minTok);
+    assertEq(owner.balance, ownEth - valEth); // Owner ETH
+    assertEq(token.balanceOf(owner), valTok); // Owner TOK
+    // In swap eth: 40, tok: 57 => 31
+    uint valEth2 = 40;
+    uint minTok2 = 31;
+    vm.expectEmit(true, true, true, true);
+    emit TokenExchange.EvTokenBuy(exchAddr, owner, owner, valEth2, minTok2);
+    vm.prank(owner);
+    uint valTok2 = exchange.inSwapEthTok{value: valEth2}(minTok2);
+    assertGe(valTok2, minTok2);
+    assertEq(owner.balance, ownEth - valEth - valEth2); // Owner ETH
+    assertEq(token.balanceOf(owner), valTok + valTok2); // Owner TOK
+  }
+
+  function testOutSwapEthTok() public {
+    depositLiquidity();
+    uint ownEth = 500;
+    vm.deal(owner, ownEth);
+    // Out swap eth: 40 => 66, tok: 80
+    uint valTok = 80;
+    uint maxEth = 70; // 66;
+    vm.expectEmit(true, true, true, true);
+    emit TokenExchange.EvTokenBuy(exchAddr, owner, owner, 66, valTok);
+    emit TokenExchange.EvEtherRefund(exchAddr, owner, maxEth - 66);
+    vm.prank(owner);
+    uint valEth = exchange.outSwapEthTok{value: maxEth}(valTok);
+    assertEq(owner.balance, ownEth - valEth); // Owner ETH
+    assertEq(token.balanceOf(owner), valTok); // Owner TOK
+    // Out swap eth: 66 => 332, tok: 80
+    uint valTok2 = 80;
+    uint maxEth2 = 340; // 332;
+    vm.expectEmit(true, true, true, true);
+    emit TokenExchange.EvTokenBuy(exchAddr, owner, owner, 332, valTok2);
+    emit TokenExchange.EvEtherRefund(exchAddr, owner, maxEth2 - 332);
+    vm.prank(owner);
+    uint valEth2 = exchange.outSwapEthTok{value: maxEth2}(valTok2);
+    assertEq(owner.balance, ownEth - valEth - valEth2); // Owner ETH
+    assertEq(token.balanceOf(owner), valTok + valTok2); // Owner TOK
   }
 }

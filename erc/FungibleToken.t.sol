@@ -19,18 +19,18 @@ contract Token is FungibleToken {
 }
 
 contract FungibleTokenTest is Test {
-  address own;
-  uint initSupp = 10;
-  Token tok;
-  address rcp;
-  address spn;
+  address owner;
+  uint supply = 10;
+  Token token;
+  address rcp; // recipient
+  address spn; // spender
 
   function setUp() public {
     // Create the Token contract
-    own = makeAddr("own");
-    tok = new Token(own, initSupp, "Token", "TOK", 0);
-    assertEq(tok.totalSupply(), initSupp);
-    assertEq(tok.balanceOf(own), initSupp);
+    owner = makeAddr("owner");
+    token = new Token(owner, supply, "Token", "TOK", 0);
+    assertEq(token.totalSupply(), supply);
+    assertEq(token.balanceOf(owner), supply);
     // Create the recipient and the spender
     (rcp, spn) = (makeAddr("recipient"), makeAddr("spender"));
   }
@@ -39,60 +39,60 @@ contract FungibleTokenTest is Test {
     // The owner transfers tokens to the recipient
     uint val = 1;
     vm.expectEmit(true, true, false, true);
-    emit IFungibleToken.Transfer(own, rcp, val);
-    vm.prank(own);
-    tok.transfer(rcp, val);
-    assertEq(tok.balanceOf(own), initSupp - val);
-    assertEq(tok.balanceOf(rcp), val);
+    emit IFungibleToken.Transfer(owner, rcp, val);
+    vm.prank(owner);
+    token.transfer(rcp, val);
+    assertEq(token.balanceOf(owner), supply - val);
+    assertEq(token.balanceOf(rcp), val);
   }
 
   function testTransferErrInsufficientFunds() public {
     // The owner fails to transfer more tokens than the owner owns
-    uint val = initSupp + 1;
+    uint val = supply + 1;
     bytes memory err = abi.encodeWithSelector(
-      FungibleToken.ErrInsufficientFunds.selector, own, val
+      FungibleToken.ErrInsufficientFunds.selector, owner, val
     );
     vm.expectRevert(err);
-    vm.prank(own);
-    tok.transfer(rcp, val);
-    assertEq(tok.balanceOf(own), initSupp);
+    vm.prank(owner);
+    token.transfer(rcp, val);
+    assertEq(token.balanceOf(owner), supply);
   }
 
   function testApproveTransferFrom() public {
     // The owner approves the spender to transfer tokens on the owner's behalf
     uint val = 1;
     vm.expectEmit(true, true, false, true);
-    emit IFungibleToken.Approval(own, spn, val);
-    vm.prank(own);
-    tok.approve(spn, val);
-    assertEq(tok.allowance(own, spn), val);
+    emit IFungibleToken.Approval(owner, spn, val);
+    vm.prank(owner);
+    token.approve(spn, val);
+    assertEq(token.allowance(owner, spn), val);
     // The spender transfers tokens from the owner to the recipient
     vm.expectEmit(true, true, false, true);
-    emit IFungibleToken.Transfer(own, rcp, val);
+    emit IFungibleToken.Transfer(owner, rcp, val);
     vm.prank(spn);
-    tok.transferFrom(own, rcp, val);
-    assertEq(tok.balanceOf(own), initSupp - val);
-    assertEq(tok.balanceOf(rcp), val);
-    assertEq(tok.allowance(own, spn), 0);
+    token.transferFrom(owner, rcp, val);
+    assertEq(token.balanceOf(owner), supply - val);
+    assertEq(token.balanceOf(rcp), val);
+    assertEq(token.allowance(owner, spn), 0);
   }
 
   function testApproveTransferFromErrBeyondAllowance() public {
     // The owner approves the spender to transfer tokens on the owner's behalf
     uint val = 1;
     vm.expectEmit(true, true, false, true);
-    emit IFungibleToken.Approval(own, spn, val);
-    vm.prank(own);
-    tok.approve(spn, val);
-    assertEq(tok.allowance(own, spn), val);
+    emit IFungibleToken.Approval(owner, spn, val);
+    vm.prank(owner);
+    token.approve(spn, val);
+    assertEq(token.allowance(owner, spn), val);
     // The spender fails to transfer tokens beyond the spender's allowance
     bytes memory err = abi.encodeWithSelector(
-      FungibleToken.ErrBeyondAllowance.selector, own, spn, val * 2
+      FungibleToken.ErrBeyondAllowance.selector, owner, spn, val * 2
     );
     vm.expectRevert(err);
     vm.prank(spn);
-    tok.transferFrom(own, rcp, val * 2);
-    assertEq(tok.balanceOf(own), initSupp);
-    assertEq(tok.allowance(own, spn), val);
+    token.transferFrom(owner, rcp, val * 2);
+    assertEq(token.balanceOf(owner), supply);
+    assertEq(token.allowance(owner, spn), val);
   }
 
   function testMintBurn() public {
@@ -100,17 +100,17 @@ contract FungibleTokenTest is Test {
     uint val = 1;
     vm.expectEmit(true, true, false, true);
     emit IFungibleToken.Transfer(address(0), rcp, val);
-    vm.prank(own);
-    tok.mintTokens(rcp, val);
-    assertEq(tok.balanceOf(rcp), val);
-    assertEq(tok.totalSupply(), initSupp + val);
+    vm.prank(owner);
+    token.mintTokens(rcp, val);
+    assertEq(token.balanceOf(rcp), val);
+    assertEq(token.totalSupply(), supply + val);
     // The owner burns existing tokens by withdrawing them from the recipient
     vm.expectEmit(true, true, false, true);
     emit IFungibleToken.Transfer(rcp, address(0), val);
-    vm.prank(own);
-    tok.burnTokens(rcp, val);
-    assertEq(tok.balanceOf(rcp), 0);
-    assertEq(tok.totalSupply(), initSupp);
+    vm.prank(owner);
+    token.burnTokens(rcp, val);
+    assertEq(token.balanceOf(rcp), 0);
+    assertEq(token.totalSupply(), supply);
   }
 
   function testMintBurnErrInsufficientFunds() public {
@@ -118,18 +118,18 @@ contract FungibleTokenTest is Test {
     uint val = 1;
     vm.expectEmit(true, true, false, true);
     emit IFungibleToken.Transfer(address(0), rcp, val);
-    vm.prank(own);
-    tok.mintTokens(rcp, val);
-    assertEq(tok.balanceOf(rcp), val);
-    assertEq(tok.totalSupply(), initSupp + val);
+    vm.prank(owner);
+    token.mintTokens(rcp, val);
+    assertEq(token.balanceOf(rcp), val);
+    assertEq(token.totalSupply(), supply + val);
     // The owner fails to burn more tokens than the recipient owns
     bytes memory err = abi.encodeWithSelector(
       FungibleToken.ErrInsufficientFunds.selector, rcp, val * 2
     );
     vm.expectRevert(err);
-    vm.prank(own);
-    tok.burnTokens(rcp, val * 2);
-    assertEq(tok.balanceOf(rcp), val);
-    assertEq(tok.totalSupply(), initSupp + val);
+    vm.prank(owner);
+    token.burnTokens(rcp, val * 2);
+    assertEq(token.balanceOf(rcp), val);
+    assertEq(token.totalSupply(), supply + val);
   }
 }

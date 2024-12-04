@@ -125,7 +125,7 @@ contract TokenExchange is Base, FungibleToken {
 
   function outPrice(uint valOut, uint resIn, uint resOut) internal view
     returns (uint) {
-    uint valIn = 1000 * valOut * resIn / fee * (resOut - valOut);
+    uint valIn = 1000 * valOut * resIn / (fee * (resOut - valOut));
     return valIn;
   }
 
@@ -146,8 +146,6 @@ contract TokenExchange is Base, FungibleToken {
 
   function inSwapEthTok(uint minTok) external payable returns (uint) {
     address byr = msg.sender;
-    uint valEth = msg.value;
-    positive(valEth); positive(minTok);
     return inSwapToEthTok(minTok, byr);
   }
 
@@ -174,8 +172,6 @@ contract TokenExchange is Base, FungibleToken {
 
   function outSwapEthTok(uint valTok) external payable returns (uint) {
     address byr = msg.sender;
-    uint maxEth = msg.value;
-    positive(maxEth); positive(valTok);
     return outSwapToEthTok(valTok, byr);
   }
 
@@ -196,7 +192,6 @@ contract TokenExchange is Base, FungibleToken {
   }
 
   function inSwapTokEth(uint valTok, uint minEth) external returns (uint) {
-    positive(valTok); positive(minEth);
     address sel = msg.sender;
     return inSwapToTokEth(valTok, minEth, sel);
   }
