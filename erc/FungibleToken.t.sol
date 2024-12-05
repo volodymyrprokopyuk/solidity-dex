@@ -5,15 +5,14 @@ import {Test} from "forge-std/Test.sol";
 import {IFungibleToken, FungibleToken} from "erc/FungibleToken.sol";
 
 contract Token is FungibleToken {
-  constructor(
-    address own, uint initSupp, string memory nam, string memory sym, uint8 dec
-  ) FungibleToken(own, initSupp, nam, sym, dec) { }
+  constructor(string memory nam, string memory sym, uint8 dec)
+    FungibleToken(nam, sym, dec) { }
 
-  function mintTokens(address rcp, uint val) external returns (bool succ) {
+  function mintTokens(address rcp, uint val) external returns (bool) {
     return mint(rcp, val);
   }
 
-  function burnTokens(address own, uint val) external returns (bool succ) {
+  function burnTokens(address own, uint val) external returns (bool) {
     return burn(own, val);
   }
 }
@@ -28,7 +27,8 @@ contract FungibleTokenTest is Test {
   function setUp() public {
     // Create the Token contract
     owner = makeAddr("owner");
-    token = new Token(owner, supply, "Token", "TOK", 0);
+    token = new Token("Token", "TOK", 0);
+    token.mintTokens(owner, supply);
     assertEq(token.totalSupply(), supply);
     assertEq(token.balanceOf(owner), supply);
     // Create the recipient and the spender

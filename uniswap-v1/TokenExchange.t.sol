@@ -7,9 +7,8 @@ import {ExchangeFactory} from "uniswap-v1/ExchangeFactory.sol";
 import {TokenExchange} from "uniswap-v1/TokenExchange.sol";
 
 contract Token is FungibleToken {
-  constructor(
-    address own, uint initSupp, string memory nam, string memory sym, uint8 dec
-  ) FungibleToken(own, initSupp, nam, sym, dec) { }
+  constructor(string memory nam, string memory sym, uint8 dec)
+    FungibleToken(nam, sym, dec) { }
 
   function mintTokens(address rcp, uint val) external returns (bool) {
     return mint(rcp, val);
@@ -26,7 +25,7 @@ contract TokenExchangeTest is Test {
   function setUp() public {
     // Create the TOK to swap
     owner = makeAddr("owner");
-    token = new Token(owner, 0, "Token", "TOK", 0);
+    token = new Token("Token", "TOK", 0);
     // Create the TOK exchange
     factory = new ExchangeFactory();
     exchAddr = factory.createExchange(address(token));

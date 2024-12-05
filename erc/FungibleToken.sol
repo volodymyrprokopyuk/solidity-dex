@@ -19,7 +19,6 @@ interface IFungibleToken {
 }
 
 abstract contract FungibleToken is IFungibleToken, Base {
-  address public owner;
   string public name;
   string public symbol;
   uint8 public decimals;
@@ -39,12 +38,8 @@ abstract contract FungibleToken is IFungibleToken, Base {
     require(allowance[own][spn] >= val, ErrBeyondAllowance(own, spn, val));
   }
 
-  constructor(
-    address own, uint initSupp, string memory nam, string memory sym, uint8 dec
-  ) {
-    (owner, name, symbol, decimals) = (own, nam, sym, dec);
-    balanceOf[own] = initSupp;
-    totalSupply = initSupp;
+  constructor(string memory nam, string memory sym, uint8 dec) {
+    (name, symbol, decimals) = (nam, sym, dec);
   }
 
   function transfer(address rcp, uint val) external returns (bool) {
