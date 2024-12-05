@@ -22,6 +22,44 @@
 
 ** Concepts and purpose
 
+- Token exchange :: The token exchange is a distributed, censorship-resistant
+  market place in the form of a smart contract on Ethereum, that performs
+  automated trading of assets with liquidity-sensitive automated pricing. A
+  token exchange allows traders to swap ETH with a specific ERC-20 token TOK in
+  both directions by adding liquidity on one side and withdrawing from the
+  reserves on the other side
+- Constant Product Market Place CPMM :: The CPMM is a token exchange that uses
+  the constant product formula ~xy = k~ for liquidity-sensitive pricing, where
+  =x= is the reserve of token X e.g. ETH, and =y= is the reserves of token Y
+  e.g. ERC-20 token TOK. The first liquidity provider that deposits the initial
+  liquidity to the token exchange defines the initial price for TOK in terms of
+  the deposited ETH. All subsequent deposits and withdrawals of liquidity are
+  executed at the at the current constantly changing price. Buying a TOK
+  increases TOK price and vice versa. The constant product formula ~xy = k~ of
+  the CPMM protects the token exchange from being completely drained. The higher
+  is the demand, the more costly is the asset.
+- Trade fee :: The trading fee e.g. 0.3% is taken from each trade and is added
+  to the corresponding reserves hold on the token exchange. The total value of
+  reserves increases over time due to the fee. The fee is distributed between
+  liquidity providers proportionally to their liquidity contribution, that is
+  measured by the value of their LIQ accounts. The more LIQ a liquidity provider
+  owns, the more fees he earns
+- Liquidity provisioning :: The liquidity provisioning allows anyone to become a
+  liquidity provider and deposit the equivalent values of both ETH and TOK to
+  the corresponding ETH and TOK reserves hold by the token exchange. When a
+  liquidity provider deposits liquidity, the token exchange mints and deposits
+  an equivalent value of the liquidity token LIQ to the liquidity provider
+  account. There is no supply limit to LIQ. When a liquidity provider withdraws
+  liquidity, the token exchange burns an equivalent value of the liquidity token
+  LIQ from the liquidity provider account. The value of the liquidity token LIQ
+  indicates the relative contribution of each liquidity provider to the ETH and
+  TOK reserves of the token exchange
+- Slippage :: The slippage is the difference in price between the expected price
+  of a submitted transaction and the actual price of the executed transaction
+  due to the constant price fluctuation based on the available liquidity and the
+  volume of trading. A trader specifies the maximum acceptable slippage for
+  every trade: min bought value on sell trades, max sell value on buy trades
+
 ** Design and implementation
 
 *** Token exchange contract
@@ -276,13 +314,13 @@ event EvTokenSell(
 function inSwapToTokEth(uint valTok, uint minEth, address rcp) public
   returns (uint valEth) {
   // Only key decisions and actions
-    uint resEth = exch.balance;
-    uint resTok = token.balanceOf(exch);
-    uint valEth = inPrice(valTok, resTok, resEth);
-    bool success = token.transferFrom(sel, exch, valTok);
-    (success, ) = rcp.call{value: valEth}("");
-    emit EvTokenSell(exch, sel, rcp, valTok, valEth);
-    return valEth;
+  uint resEth = exch.balance;
+  uint resTok = token.balanceOf(exch);
+  uint valEth = inPrice(valTok, resTok, resEth);
+  bool success = token.transferFrom(sel, exch, valTok);
+  (success, ) = rcp.call{value: valEth}("");
+  emit EvTokenSell(exch, sel, rcp, valTok, valEth);
+  return valEth;
 }
   #+END_SRC
 - Out swap [to] TOK ETH :: The =outSwap[To]TokEth= function sells the TOK value
