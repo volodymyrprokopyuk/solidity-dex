@@ -26,7 +26,13 @@
 
 *** Token exchange contract
 
-- Token exchange :: The =TokenExchange= contract
+- Token exchange :: The =TokenExchange= contract is the ERC-20 fungible token
+  that represents the exchange liquidity tokens LIQ minted when the liquidity in
+  the form of ETH and TOK is deposited, and burned when the liquidity in the
+  form of ETH and TOK is withdrawn. The token exchange contract also holds the
+  address of the ERC-20 fungible token TOK that is traded on the exchange. A fee
+  e.g. 0.3% is charged to a trader that swaps ETH with TOK and vice versa on the
+  exchange
   #+BEGIN_SRC solidity
 contract TokenExchange is FungibleToken {
   address public factory;
@@ -47,74 +53,254 @@ contract TokenExchange is FungibleToken {
 
 **** Events
 
-- Liquidity deposit :: The =EvLiquidityDeposit= event
-- Liquidity withdraw :: The =EvLiquidityWithdraw= event
+- Liquidity deposit :: The =EvLiquidityDeposit= event is emitted when liquidity
+  is deposited by a liquidity provider. The liquidity deposit event provides the
+  exchange address, the depositor address, the values of the deposited ETH and
+  TOK, and the value of the minted liquidity token LIQ
+  #+BEGIN_SRC solidity
+event EvLiquidityDeposit(
+  address indexed exch, address indexed dps, uint eth, uint tok, uint liq
+);
+  #+END_SRC
+- Liquidity withdraw :: The =EvLiquidityWithdraw= event is emitted when
+  liquidity is withdrawn by a liquidity provider. The liquidity withdraw event
+  provides the exchange address, the withdrawer address, the values of the
+  withdrawn ETH and TOK, and the value of the burned liquidity token LIQ
+  #+BEGIN_SRC solidity
+event EvLiquidityWithdraw(
+  address indexed exch, address indexed wdr, uint eth, uint tok, uint liq
+);
+  #+END_SRC
 
 **** Payable functions
 
-- Deposit liquidity :: The =depositLiquidity= function
+- Deposit liquidity :: The =depositLiquidity= function takes the implicit ETH
+  value, and the max TOK value that a liquidity provider is willing to deposit,
+  and the min LIQ value that the liquidity provider whats to receive in return.
+  The deposit liquidity function calculates the actual values of TOK to deposit
+  and LIQ to mint using the =liquidityDeposit= function. When the reserves of
+  ETH and TOK are zero on the exchange, the first depositor defines the price of
+  TOK in terms of LIQ that is initially is equal to the provided ETH. For every
+  subsequent liquidity deposit
+  - The value of the deposited TOK is directly proportional to the deposited
+    ETH, and is inversely proportional to the ETH reserves
+  - The value of the received LIQ is directly proportional to the deposited ETH,
+    and is inversely proportional to the ETH reserves
+  If the actual values of the deposited TOK and the received LIQ are within the
+  requested limits, the TOK value is deposited to the exchange account and the
+  LIQ value is minted to the depositor account. The deposit liquidity function
+  returns the actual value of LIQ. The deposit liquidity function emit the
+  =EvLiquidityDeposit= event
   #+BEGIN_SRC solidity
-  function depositLiquidity(uint maxTok, uint minLiq) external payable
-    returns (uint valLiq);
+function depositLiquidity(uint maxTok, uint minLiq) external payable
+  returns (uint valLiq) {
+  // Only key decisions and actions
+  uint valEth = msg.value; // ETH already deposited for the exchange
+  uint resEth = exch.balance - valEth;
+  uint resTok = token.balanceOf(exch);
+  uint resLiq = totalSupply;
+  if (resLiq == 0) {
+    // The first depositor sets the TOK price in terms of LIQ
+    valTok = maxTok;
+    valLiq = valEth;
+  } else {
+    valTok = valEth * resTok / resEth;
+    valLiq = valEth * resLiq / resEth;
+  }
+  bool success = mint(dps, valLiq); // Mint LIQ for the depositor
+  success = token.transferFrom(dps, exch, valTok); // Deposit TOK for exchange
+  emit EvLiquidityDeposit(exch, dps, valEth, valTok, valLiq);
+  return valLiq;
+}
   #+END_SRC
 
 **** Public functions
 
-- Withdraw liquidity :: The =withdrawLiquidity= function
+- Withdraw liquidity :: The =withdrawLiquidity= function takes the min ETH value
+  and the min TOK value that a liquidity provider wants to withdraw and
+  specifies the value of LIQ to burn from the liquidity provider account on the
+  exchange. The withdraw liquidity function calculates the actual values of ETH
+  and TOK to withdraw
+  - The value of ETH to withdraw is directly proportional to the LIQ value, and
+    is inversely proportional to the LIQ reserves
+  - The value of TOK to withdraw is directly proportional to the LIQ value, and
+    is inversely proportional to the LIQ reserves
+  If the actual values of ETH and TOK to withdraw are within the requested
+  limits, the LIQ value is burned from the withdrawer account, the TOK value is
+  deposited to the withdrawer account, and the ETH value is deposited to the
+  withdrawer account. The withdraw liquidity function returns the actual values
+  of ETH and TOK withdrawn. The withdraw liquidity function emits the
+  =EvLiquidityWithdraw= event
   #+BEGIN_SRC solidity
 function withdrawLiquidity(uint minEth, uint minTok, uint valLiq) external
-  returns (uint valEth, uint valTok);
+  returns (uint valEth, uint valTok) {
+  // Only key decisions and actions
+  uint resEth = exch.balance;
+  uint resTok = token.balanceOf(exch);
+  uint resLiq = totalSupply;
+  uint valEth = valLiq * resEth / resLiq;
+  uint valTok = valLiq * resTok / resLiq;
+  bool success = burn(wdr, valLiq); // Burn LIQ from the withdrawer
+  success = token.transfer(wdr, valTok); // Deposit TOK to the withdrawer
+  (success, ) = wdr.call{value: valEth}(""); // Deposit ETH to the withdrawer
+  emit EvLiquidityWithdraw(exch, wdr, valEth, valTok, valLiq);
+  return (valEth, valTok);
+}
   #+END_SRC
 
 *** Swap ether for tokens
 
 **** Events
 
-- Token buy :: The =EvTokenBuy= event
-- Ether refund :: The =EvEtherRefund= event
+- Token buy :: The =EvTokenBuy= event is emitted when the value of TOK is bought
+  for ETH. The token buy event provides the exchange address, the address of a
+  buyer who initiated the trade, the address of a recipient who receives the TOK
+  value, who may be the buyer, the value of ETH sold, and the value of TOK
+  bought
+  #+BEGIN_SRC solidity
+event EvTokenBuy(
+  address indexed exch, address indexed byr, address indexed rcp,
+  uint eth, uint tok
+);
+  #+END_SRC
+- Ether refund :: The =EvEtherRefund= event is emitted when more than necessary
+  ETH was provided to buy a fixed value of TOK. The refund of ETH is performed
+  back to the buyer account who initiated the trade. The ETH refund event
+  provides the exchange address, the address of a buyer who initiated the trade,
+  and the value of ETH refunded
+  #+BEGIN_SRC solidity
+event EvEtherRefund(address indexed exch, address indexed byr, uint eth);
+  #+END_SRC
 
 **** Internal views
 
-- In price :: The =inPrice= function
+- In price :: The =inPrice= function takes the fixed value of ETH or any other
+  cryptocurrency or token to sell and calculates the value of TOK or any other
+  cryptocurrency or token to buy based on the current reserves of ETH and TOK in
+  the exchange. The in price function returns the calculated value of TOK to buy
+  given the fixed value of ETH to sell
   #+BEGIN_SRC solidity
 function inPrice(uint valIn, uint resIn, uint resOut) internal view
-  returns (uint valOut);
+  returns (uint) {
+  uint feeValIn = fee * valIn;
+  uint valOut = feeValIn * resOut / (1000 * resIn + feeValIn);
+  return valOut;
+}
   #+END_SRC
-- Out price :: The =outPrice= function
+- Out price :: The =outPrice= function takes the fixed value of TOK or any other
+  cryptocurrency or token to buy and calculates the value of ETH or any other
+  cryptocurrency or token to sell based on the current reserves of ETH and TOK
+  in the exchange. The out price function returns the calculated value of ETH to
+  sell given the fixed value of TOK to buy
   #+BEGIN_SRC solidity
 function outPrice(uint valOut, uint resIn, uint resOut) internal view
-  returns (uint valIn);
+  returns (uint) {
+  uint valIn = 1000 * valOut * resIn / (fee * (resOut - valOut));
+  return valIn;
+}
   #+END_SRC
 
 **** Payable functions
 
-- In swap [to] ETH TOK :: The =inSwap[To]EthTok= function
+- In swap [to] ETH TOK :: The =inSwap[To]EthTok= function sells the implicitly
+  provided value of ETH and buys the calculated value of TOK if the TOK value is
+  above the specified min TOK limit. The TOK value is deposited either to the
+  specified recipient (the =inSwapTo= function) or directly to the buyer (the
+  =inSwap= function) who initiated the trade. The in swap function returns the
+  TOK value bought. The in swap function emits the =EvTokenBuy= event
   #+BEGIN_SRC solidity
 function inSwapToEthTok(uint minTok, address rcp) public payable
-  returns (uint valTok);
+  returns (uint valTok) {
+  // Only key decisions and actions
+  uint valEth = msg.value;
+  uint resEth = exch.balance - valEth;
+  uint resTok = token.balanceOf(exch);
+  uint valTok = inPrice(valEth, resEth, resTok);
+  bool success = token.transfer(rcp, valTok);
+  emit EvTokenBuy(exch, byr, rcp, valEth, valTok);
+  return valTok;
+}
   #+END_SRC
 
-- Out swap [to] ETH TOK :: The =outSwap[To]EthTok= function
+- Out swap [to] ETH TOK :: The =outSwap[To]EthTok= function sells the implicitly
+  provided value of ETH and buys the fixed value of TOK if the provided ETH
+  value is enough. The extra provided ETH value is refunded to the buyer. The
+  TOK value is deposited either to the specified recipient (the =outSwapTo=
+  function) or directly to the buyer (the =outSwap= function) who initiated the
+  trade. The out swap function returns the actual ETH value sold. The out swap
+  function emits the =EvTokenBuy= event
   #+BEGIN_SRC solidity
 function outSwapToEthTok(uint valTok, address rcp) public payable
-  returns (uint valEth);
+  returns (uint valEth) {
+  // Only key decisions and actions
+  uint maxEth = msg.value;
+  uint resEth = exch.balance - maxEth;
+  uint resTok = token.balanceOf(exch);
+  uint valEth = outPrice(valTok, resEth, resTok);
+  if (valEth < maxEth) {
+    uint refEth = maxEth - valEth;
+    (bool refSucc, ) = byr.call{value: refEth}("");
+    emit EvEtherRefund(exch, byr, refEth);
+  }
+  bool success = token.transfer(rcp, valTok);
+  emit EvTokenBuy(exch, byr, rcp, valEth, valTok);
+  return valEth;
+}
   #+END_SRC
 
 *** Swap tokens for ether
 
 **** Events
 
-- Token sell :: The =EvTokenSell= event
+- Token sell :: The =EvTokenSell= event is emitted when the TOL value is sold
+  for ETH. The token sell event provides the exchange address, the address of a
+  seller who initiated the trades, the address of a recipient who receives the
+  ETH value, who may be the seller, the value of TOK sold, and the value of ETH
+  bought
+  #+BEGIN_SRC solidity
+event EvTokenSell(
+  address indexed exch, address indexed sel, address indexed rcp,
+  uint tok, uint eth
+);
+  #+END_SRC
 
 **** Public functions
 
-- In swap [to] TOK ETH :: The =inSwap[To]TokEth= function
+- In swap [to] TOK ETH :: The =inSwap[To]TokEth= function sells the TOK value
+  and buys the ETH value if the ETH value is above the specified min ETH limit.
+  The ETH value is deposited either to the specified recipient (the =inSwapTo=
+  function) or directly to the seller (the =inSwap= function) who initiated the
+  trade. The in swap function returns the ETH value bought. The in swap function
+  emits the =EvTokenSell= event
   #+BEGIN_SRC solidity
 function inSwapToTokEth(uint valTok, uint minEth, address rcp) public
-  returns (uint valEth);
+  returns (uint valEth) {
+  // Only key decisions and actions
+    uint resEth = exch.balance;
+    uint resTok = token.balanceOf(exch);
+    uint valEth = inPrice(valTok, resTok, resEth);
+    bool success = token.transferFrom(sel, exch, valTok);
+    (success, ) = rcp.call{value: valEth}("");
+    emit EvTokenSell(exch, sel, rcp, valTok, valEth);
+    return valEth;
+}
   #+END_SRC
-- Out swap [to] TOK ETH :: The =outSwap[To]TokEth= function
+- Out swap [to] TOK ETH :: The =outSwap[To]TokEth= function sells the TOK value
+  and buys the fixed value of ETH if the provided TOK value is below the
+  specified max TOK limit. The ETH value is deposited either to the specified
+  recipient (the =outSwapTo= function) or directly to the seller (the =outSwap=
+  function) who initiated the trade. The out swap function returns the actual
+  TOK value sold. The out swap function emits the =EvTokenSell= event
   #+BEGIN_SRC solidity
 function outSwapToTokEth(uint maxTok, uint valEth, address rcp) public
   returns (uint valTok) {
+  // Only key decisions and actions
+  uint resEth = exch.balance;
+  uint resTok = token.balanceOf(exch);
+  uint valTok = outPrice(valEth, resTok, resEth);
+  bool success = token.transferFrom(sel, exch, valTok);
+  (success, ) = rcp.call{value: valEth}("");
+  emit EvTokenSell(exch, sel, rcp, valTok, valEth);
+  return valTok;
+}
   #+END_SRC

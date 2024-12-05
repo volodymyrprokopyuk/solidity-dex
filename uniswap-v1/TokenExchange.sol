@@ -76,12 +76,12 @@ contract TokenExchange is Base, FungibleToken {
   function depositLiquidity(uint maxTok, uint minLiq) external payable
     returns (uint) {
     (address dps, address exch) = (msg.sender, address(this));
-    uint valEth = msg.value; // ETH already deposited for the exchange
+    uint valEth = msg.value; // ETH already deposited to the exchange
     positive(valEth); positive(maxTok); positive(minLiq);
     (uint valTok, uint valLiq) = liquidityDeposit(maxTok, minLiq);
-    bool success = mint(dps, valLiq); // Mint LIQ for the depositor
+    bool success = mint(dps, valLiq); // Mint LIQ to the depositor
     require(success, ErrLiquidityMint(exch, dps, valLiq));
-    success = token.transferFrom(dps, exch, valTok); // Deposit TOK for exchange
+    success = token.transferFrom(dps, exch, valTok); // Deposit TOK to the exchange
     require(success, ErrTokenDeposit(exch, dps, valTok));
     emit EvLiquidityDeposit(exch, dps, valEth, valTok, valLiq);
     return valLiq;
@@ -108,9 +108,9 @@ contract TokenExchange is Base, FungibleToken {
     (uint valEth, uint valTok) = liquidityWithdrawal(minEth, minTok, valLiq);
     bool success = burn(wdr, valLiq); // Burn LIQ from the withdrawer
     require(success, ErrLiquidityBurn(exch, wdr, valLiq));
-    success = token.transfer(wdr, valTok); // Withdraw TOK from the exchange
+    success = token.transfer(wdr, valTok); // Deposit TOK to the withdrawer
     require(success, ErrTokenWithdraw(exch, wdr, valTok));
-    (success, ) = wdr.call{value: valEth}(""); // Withdraw ETH from the exchange
+    (success, ) = wdr.call{value: valEth}(""); // Deposit ETH to the withdrawer
     require(success, ErrEtherWithdraw(exch, wdr, valEth));
     emit EvLiquidityWithdraw(exch, wdr, valEth, valTok, valLiq);
     return (valEth, valTok);

@@ -4,10 +4,10 @@
 
 - [[/erc/FungibleToken.org][ERC-20 fungible token]]
 
-** Uniswap
+** Uniswap DEX
 
 *** Uniswap v1
 
 - [[/uniswap-v1/TokenExchange.org][Uniswap v1 token exchange]]
-  - [[/uniswap-v1/PriceCalculation.html][Uniswap v1 price calculation]]
-    (download raw HTML and open the HTML locally to view mathematical formulae)
+  - [[/uniswap-v1/PriceCalculation.html][Uniswap v1 price calculation]] download
+    the raw HTML file and open it locally to view mathematical formulae
