@@ -1,12 +1,120 @@
 * Uniswap v1 token exchange
-
 :PROPERTIES:
 :TOC: :include descendants
 :END:
 
 :CONTENTS:
+- [[#concepts-and-purpose][Concepts and purpose]]
+- [[#design-and-implementation][Design and implementation]]
+  - [[#token-exchange-contract][Token exchange contract]]
+  - [[#deposit-and-withdraw-liquidity][Deposit and withdraw liquidity]]
+    - [[#events][Events]]
+    - [[#payable-functions][Payable functions]]
+    - [[#public-functions][Public functions]]
+  - [[#swap-ether-for-tokens][Swap ether for tokens]]
+    - [[#events][Events]]
+    - [[#internal-views][Internal views]]
+    - [[#payable-functions][Payable functions]]
+  - [[#swap-tokens-for-ether][Swap tokens for ether]]
+    - [[#events][Events]]
+    - [[#public-functions][Public functions]]
 :END:
 
 ** Concepts and purpose
 
 ** Design and implementation
+
+*** Token exchange contract
+
+- Token exchange :: The =TokenExchange= contract
+  #+BEGIN_SRC solidity
+contract TokenExchange is FungibleToken {
+  address public factory;
+  IFungibleToken public token; // TOK to swap
+  uint fee; // 1000 - feePermille
+
+  constructor(address tok, uint feePermille)
+    FungibleToken("Liquidity token", "LIQ", 0) {
+    validAddress(address(tok));
+    factory = msg.sender;
+    token = IFungibleToken(tok);
+    fee = 1000 - feePermille;
+  }
+}
+  #+END_SRC
+
+*** Deposit and withdraw liquidity
+
+**** Events
+
+- Liquidity deposit :: The =EvLiquidityDeposit= event
+- Liquidity withdraw :: The =EvLiquidityWithdraw= event
+
+**** Payable functions
+
+- Deposit liquidity :: The =depositLiquidity= function
+  #+BEGIN_SRC solidity
+  function depositLiquidity(uint maxTok, uint minLiq) external payable
+    returns (uint valLiq);
+  #+END_SRC
+
+**** Public functions
+
+- Withdraw liquidity :: The =withdrawLiquidity= function
+  #+BEGIN_SRC solidity
+function withdrawLiquidity(uint minEth, uint minTok, uint valLiq) external
+  returns (uint valEth, uint valTok);
+  #+END_SRC
+
+*** Swap ether for tokens
+
+**** Events
+
+- Token buy :: The =EvTokenBuy= event
+- Ether refund :: The =EvEtherRefund= event
+
+**** Internal views
+
+- In price :: The =inPrice= function
+  #+BEGIN_SRC solidity
+function inPrice(uint valIn, uint resIn, uint resOut) internal view
+  returns (uint valOut);
+  #+END_SRC
+- Out price :: The =outPrice= function
+  #+BEGIN_SRC solidity
+function outPrice(uint valOut, uint resIn, uint resOut) internal view
+  returns (uint valIn);
+  #+END_SRC
+
+**** Payable functions
+
+- In swap [to] ETH TOK :: The =inSwap[To]EthTok= function
+  #+BEGIN_SRC solidity
+function inSwapToEthTok(uint minTok, address rcp) public payable
+  returns (uint valTok);
+  #+END_SRC
+
+- Out swap [to] ETH TOK :: The =outSwap[To]EthTok= function
+  #+BEGIN_SRC solidity
+function outSwapToEthTok(uint valTok, address rcp) public payable
+  returns (uint valEth);
+  #+END_SRC
+
+*** Swap tokens for ether
+
+**** Events
+
+- Token sell :: The =EvTokenSell= event
+
+**** Public functions
+
+- In swap [to] TOK ETH :: The =inSwap[To]TokEth= function
+  #+BEGIN_SRC solidity
+function inSwapToTokEth(uint valTok, uint minEth, address rcp) public
+  returns (uint valEth);
+  #+END_SRC
+- Out swap [to] TOK ETH :: The =outSwap[To]TokEth= function
+  #+BEGIN_SRC solidity
+function outSwapToTokEth(uint maxTok, uint valEth, address rcp) public
+  returns (uint valTok) {
+  #+END_SRC

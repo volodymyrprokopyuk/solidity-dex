@@ -1,5 +1,4 @@
 * ERC-20 fungible token
-
 :PROPERTIES:
 :TOC: :include descendants
 :END:
@@ -7,10 +6,16 @@
 :CONTENTS:
 - [[#concepts-and-purpose][Concepts and purpose]]
 - [[#design-and-implementation][Design and implementation]]
-  - [[#events][Events]]
-  - [[#views][Views]]
-  - [[#public-functions][Public functions]]
-  - [[#internal-functions][Internal functions]]
+  - [[#owner-transfer][Owner transfer]]
+    - [[#events][Events]]
+    - [[#views][Views]]
+    - [[#public-functions][Public functions]]
+  - [[#transfer-on-behalf][Transfer on behalf]]
+    - [[#events][Events]]
+    - [[#views][Views]]
+    - [[#public-functions][Public functions]]
+  - [[#mint-and-burn-tokens][Mint and burn tokens]]
+    - [[#internal-functions][Internal functions]]
 :END:
 
 ** Concepts and purpose
@@ -30,7 +35,9 @@
 
 ** Design and implementation
 
-*** Events
+*** Owner transfer
+
+**** Events
 
 - Transfer :: The =Transfer= event is emitted on a successful transfer
   - An owner transfers tokens to a recipient
@@ -40,14 +47,8 @@
   #+BEGIN_SRC solidity
 event Transfer(address indexed own, address indexed rcp, uint val);
   #+END_SRC
-- Approval :: The =Approval= event is emitted on a successful approval
-  - An owner grants a limited permission to a spender to transfer up to a
-    maximum value of tokens on behalf of the owner
-  #+BEGIN_SRC solidity
-event Approval(address indexed own, address indexed spn, uint maxVal);
-  #+END_SRC
 
-*** Views
+**** Views
 
 - Total supply :: The =totalSupply= view returns the total amount of tokens
   either initially created or incrementally minted, minus the burned tokens
@@ -58,19 +59,36 @@ function totalSupply() external view returns (uint totSupp);
   #+BEGIN_SRC solidity
 function balanceOf(address own) external view (uint bal);
   #+END_SRC
-- Allowance :: The =allowance= view returns the remaining to spend value value
-  for a spender to transfer on behalf of the owner
-  #+BEGIN_SRC solidity
-function allowance(address own, address spn) external view returns (uint remVal);
-  #+END_SRC
 
-*** Public functions
+**** Public functions
 
 - Transfer :: The =transfer= function allows an owner (=msg.sender=) to transfer
   tokens to a recipient and emits the =Transfer= event
   #+BEGIN_SRC solidity
 function transfer(address rcp, uint val) external returns (bool succ);
   #+END_SRC
+
+*** Transfer on behalf
+
+**** Events
+
+- Approval :: The =Approval= event is emitted on a successful approval
+  - An owner grants a limited permission to a spender to transfer up to a
+    maximum value of tokens on behalf of the owner
+    #+BEGIN_SRC solidity
+  event Approval(address indexed own, address indexed spn, uint maxVal);
+    #+END_SRC
+
+**** Views
+
+- Allowance :: The =allowance= view returns the remaining to spend value value
+  for a spender to transfer on behalf of the owner
+  #+BEGIN_SRC solidity
+function allowance(address own, address spn) external view returns (uint remVal);
+  #+END_SRC
+
+**** Public functions
+
 - Approve :: The =approve= function allows an owner (=msg.sender=) to grant a
   limited permission to a spender to transfer up to the maximum value of tokens
   on behalf of the owner
@@ -85,7 +103,9 @@ function transferFrom(address own, address rcp, uint val) external
   returns (bool succ);
   #+END_SRC
 
-*** Internal functions
+*** Mint and burn tokens
+
+**** Internal functions
 
 - Mint :: The =mint= function deposits newly created tokens to a recipient
   account and emits the =Transfer= event where the sender is ~address(0)~

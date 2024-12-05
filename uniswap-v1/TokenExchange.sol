@@ -6,7 +6,7 @@ import {IFungibleToken, FungibleToken} from "erc/FungibleToken.sol";
 
 contract TokenExchange is Base, FungibleToken {
   address public factory;
-  IFungibleToken public token;
+  IFungibleToken public token; // TOK to swap
   uint fee; // 1000 - feePermille
 
   event EvLiquidityDeposit(
@@ -209,7 +209,7 @@ contract TokenExchange is Base, FungibleToken {
     (success, ) = rcp.call{value: valEth}("");
     require(success, ErrEtherSend(exch, rcp, valEth));
     emit EvTokenSell(exch, sel, rcp, valTok, valEth);
-    return valEth;
+    return valTok;
   }
 
   function outSwapTokEth(uint maxTok, uint valEth) external returns (uint) {
