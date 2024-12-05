@@ -1,21 +1,22 @@
-* Fungible token
+* ERC-20 fungible token
 :PROPERTIES:
 :TOC: :include descendants
 :END:
 
 :CONTENTS:
 - [[#concepts-and-purpose][Concepts and purpose]]
-- [[#interface][Interface]]
+- [[#design-and-implementation][Design and implementation]]
   - [[#events][Events]]
   - [[#views][Views]]
-  - [[#functions][Functions]]
+  - [[#public-functions][Public functions]]
+  - [[#internal-functions][Internal functions]]
 :END:
 
 ** Concepts and purpose
 
 [[https://eips.ethereum.org/EIPS/eip-20][ERC-20 Token standard]]
 
-- ERC-20 token :: The ERC-20 token standard defines an interface for
+- ERC-20 fungible token :: The ERC-20 token standard defines an interface for
   implementing fungible tokens on Ethereum. All tokens have the same value, are
   indistinguishable and identical. Tokens can either be initially supplied or
   incrementally minted. Tokens can also be burned. The token standard allows an
@@ -26,7 +27,7 @@
   an owner for a spender to transfer. Minting and burning of tokens is not
   specified by the token standard
 
-** Interface
+** Design and implementation
 
 *** Events
 
@@ -62,7 +63,7 @@ function balanceOf(address own) external view (uint bal);
 function allowance(address own, address spn) external view returns (uint remVal);
   #+END_SRC
 
-*** Functions
+*** Public functions
 
 - Transfer :: The =transfer= function allows an owner (=msg.sender=) to transfer
   tokens to a recipient and emits the =Transfer= event
@@ -81,4 +82,18 @@ function approve(address spn, uint maxVal) external returns (bool succ);
   #+BEGIN_SRC solidity
 function transferFrom(address own, address rcp, uint val) external
   returns (bool succ);
+  #+END_SRC
+
+*** Internal functions
+
+- Mint :: The =mint= function deposits newly created tokens to a recipient
+  account and emits the =Transfer= event where the sender is ~address(0)~
+  #+BEGIN_SRC solidity
+function mint(address rcp, uint val) internal returns (bool);
+  #+END_SRC
+- Burn :: The =burn= function withdraws tokens from an owner, destructs the
+  withdrawn tokens and emits the =Transfer= event where the recipient is
+  ~address(0)~
+  #+BEGIN_SRC solidity
+function burn(address own, uint val) internal returns (bool);
   #+END_SRC

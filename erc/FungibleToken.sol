@@ -47,7 +47,7 @@ abstract contract FungibleToken is IFungibleToken, Base {
     totalSupply = initSupp;
   }
 
-  function transfer(address rcp, uint val) external returns (bool succ) {
+  function transfer(address rcp, uint val) external returns (bool) {
     address own = msg.sender;
     validAddress(rcp); sufficientFunds(own, val);
     balanceOf[own] -= val;
@@ -56,7 +56,7 @@ abstract contract FungibleToken is IFungibleToken, Base {
     return true;
   }
 
-  function approve(address spn, uint maxVal) external returns (bool succ) {
+  function approve(address spn, uint maxVal) external returns (bool) {
     address own = msg.sender;
     validAddress(spn); sufficientFunds(own, maxVal);
     allowance[own][spn] = maxVal;
@@ -65,7 +65,7 @@ abstract contract FungibleToken is IFungibleToken, Base {
   }
 
   function transferFrom(address own, address rcp, uint val) external
-    returns (bool succ) {
+    returns (bool) {
     address spn = msg.sender;
     validAddress(own); validAddress(rcp);
     withinAllowance(own, spn, val); sufficientFunds(own, val);
@@ -76,7 +76,7 @@ abstract contract FungibleToken is IFungibleToken, Base {
     return true;
   }
 
-  function mint(address rcp, uint val) internal returns (bool succ) {
+  function mint(address rcp, uint val) internal returns (bool) {
     validAddress(rcp);
     balanceOf[rcp] += val;
     totalSupply += val;
@@ -84,7 +84,7 @@ abstract contract FungibleToken is IFungibleToken, Base {
     return true;
   }
 
-  function burn(address own, uint val) internal returns (bool succ) {
+  function burn(address own, uint val) internal returns (bool) {
     sufficientFunds(own, val);
     balanceOf[own] -= val;
     totalSupply -= val;
