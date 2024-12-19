@@ -20,7 +20,7 @@
 
 ** Concepts and purpose
 
-[[https://eips.ethereum.org/EIPS/eip-20][ERC-20 Token standard]]
+[[https://eips.ethereum.org/EIPS/eip-20][ERC-20 token standard]]
 
 - ERC-20 fungible token :: The ERC-20 token standard defines an interface for
   implementing fungible tokens on Ethereum. All tokens have the same value, are

@@ -1,4 +1,4 @@
-#!/usr/bin/env nu
+#!/usr/bin/env -S nu --stdin
 
 def "hash sha256" []: [binary -> string, string -> string] {
   # $in | sha256sum | str substring 0..63 | print
@@ -19,8 +19,6 @@ def "hash ripemd160" []: [binary -> string, string -> string] {
   $in | openssl dgst -ripemd160 -r | str substring 0..40
 }
 
-
-
 def "key generate" [
   --private: path = "key.pem", --public: path
 ] [nothing -> string] {
@@ -35,14 +33,11 @@ def "key generate" [
     }
 }
 
-# key generate | print
 # key generate --public pub.pem | print
-
-
 
 def parse-key [key: string]: list<string> -> string {
   skip until { $in =~ $key } | skip 1 | take while { $in =~ '^\s+' }
-    | each { str replace --all --regex '[\s:]' "" } | str join ""
+    | each { str replace --all --regex '[\s:]' "" } | str join
 }
 
 def "key print" [--public]: string -> record {
@@ -57,14 +52,38 @@ def "key print" [--public]: string -> record {
     let puby = $pub | str substring 66..129
     let addr = $pub | str substring 2..129 | hash keccak256
       | str substring 24..63
-    { key: $key, pubx: $pubx, puby: $puby, addr: $addr }
+    { key: $key, pubx: $pubx, puby: $puby, address: $addr }
   }
 }
 
 # "key.pem" | open | key print | print
 # "pub.pem" | open | key print --public | print
-# "pub.pem" | open | key print --public | get addr | print
+# "pub.pem" | open | key print --public | get address | print
 
+export def "main address checksum" []: string -> string {
+  let addr = $in | split chars
+  let hash = $in | str downcase | hash keccak256 | split chars
+  $addr | zip $hash | each {
+    let a = $in.0
+    let h = $in.1 | into int --radix 16
+    if ($h >= 8) { $a | str upcase } else { $a }
+  } | str join
+}
+
+# "pub.pem" | open | key print --public | get address | print
+# "pub.pem" | open | key print --public | get address | address checksum
+
+export def "main address verify" []: string -> bool {
+  let addr = $in | split chars
+  let hash = $in | str downcase | hash keccak256 | split chars
+  $addr | zip $hash | all {
+    let a = $in.0
+    let h = $in.1 | into int --radix 16
+    if ($h >= 8) { $a =~ '[A-F0-9]' } else { true }
+  }
+}
 
 # def "secp256k1 sign"
 # def "secp256k1 verify"
+
+def main [] { }

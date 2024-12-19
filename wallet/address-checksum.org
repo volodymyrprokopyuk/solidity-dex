@@ -1,0 +1,29 @@
+* ERC-55 address checksum
+:PROPERTIES:
+:TOC: :include descendants
+:END:
+
+:CONTENTS:
+- [[#concepts-and-purpose][Concepts and purpose]]
+- [[#design-and-implementation][Design and implementation]]
+- [[#testing-and-usage][Testing and usage]]
+:END:
+
+** Concepts and purpose
+
+[[https://eips.ethereum.org/EIPS/eip-55][ERC-55 mixed-case checksum address encoding]]
+
+- ERC-55 address checksum :: The ERC-55 address checksum is a
+  backward-compatible, mixed-case encoding of case-insensitive Ethereum
+  addresses that incorporates a checksum into the now case-sensitive address by
+  changing the capitalization of hex digit letters of the address. The address
+  checksum conveys additional information without changing the semantic address
+  value that is used to detect errors and protect against mistakes with the
+  99.986% accuracy
+
+** Design and implementation
+
+- Address checksum :: The =address checksum= function
+- Address verify :: The =address verify= function
+
+** Testing and usage
