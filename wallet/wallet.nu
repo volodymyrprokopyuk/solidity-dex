@@ -1,4 +1,4 @@
-#!/usr/bin/env -S nu --stdin
+#!/usr/bin/env nu
 
 def "hash sha256" []: [binary -> string, string -> string] {
   # $in | sha256sum | str substring 0..63 | print
@@ -60,7 +60,7 @@ def "key print" [--public]: string -> record {
 # "pub.pem" | open | key print --public | print
 # "pub.pem" | open | key print --public | get address | print
 
-export def "main address checksum" []: string -> string {
+export def "address checksum" []: string -> string {
   let addr = $in | split chars
   let hash = $in | str downcase | hash keccak256 | split chars
   $addr | zip $hash | each {
@@ -70,20 +70,29 @@ export def "main address checksum" []: string -> string {
   } | str join
 }
 
-# "pub.pem" | open | key print --public | get address | print
-# "pub.pem" | open | key print --public | get address | address checksum
+# "pub.pem" | open | key print --public | get address | address checksum | print
 
-export def "main address verify" []: string -> bool {
+export def "address verify" []: string -> bool {
   let addr = $in | split chars
   let hash = $in | str downcase | hash keccak256 | split chars
   $addr | zip $hash | all {
     let a = $in.0
     let h = $in.1 | into int --radix 16
-    if ($h >= 8) { $a =~ '[A-F0-9]' } else { true }
+    if ($h >= 8) { $a =~ '[A-F0-9]' } else { $a =~ '[a-z0-9]' }
   }
 }
 
+# "pub.pem" | open | key print --public | get address
+#   | address checksum | address verify | print
+
+
+# key generate | key print | tee { print }
+#   | get address | tee { print }
+#   | address checksum | tee { print }
+#   | address verify
+
+# key generate --private key.pem --public pub.pem
+"key.pem" | open | key print | get address | address checksum | address verify
+
 # def "secp256k1 sign"
 # def "secp256k1 verify"
-
-def main [] { }

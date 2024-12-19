@@ -2,6 +2,7 @@
 
 ** Ethereum ERC
 
+- [[/wallet/address-checksum.org][ERC-55 address checksum]]
 - [[/erc/FungibleToken.org][ERC-20 fungible token]]
 
 ** Uniswap DEX
