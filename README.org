@@ -1,6 +1,6 @@
 * Contents
 
-** ERC
+** Ethereum ERC
 
 - [[/erc/FungibleToken.org][ERC-20 fungible token]]
 

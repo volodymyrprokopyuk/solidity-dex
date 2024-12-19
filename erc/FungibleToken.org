@@ -26,12 +26,12 @@
   implementing fungible tokens on Ethereum. All tokens have the same value, are
   indistinguishable and identical. Tokens can either be initially supplied or
   incrementally minted. Tokens can also be burned. The token standard allows an
-  owner to transfer tokens to a recipient. The token standard allows an owner to
-  approve a spender to transfer up to the maximum value to a recipient on behalf
-  of the owner. The token standard provides views the check the current total
-  supply of tokens, the balance of an owner, and the remaining value approved by
-  an owner for a spender to transfer. Minting and burning of tokens is not
-  specified by the token standard
+  owner to directly transfer tokens to a recipient. The token standard allows an
+  owner to approve a spender to transfer up to the maximum value of tokens to a
+  recipient on behalf of the owner. The token standard provides views the check
+  the current total supply of tokens, the balance of an owner account, and the
+  remaining value of tokens approved by an owner for a spender to transfer.
+  Minting and burning of tokens is not specified by the ERC-20 token standard
 
 ** Design and implementation
 
@@ -40,30 +40,31 @@
 **** Events
 
 - Transfer :: The =Transfer= event is emitted on a successful transfer
-  - An owner transfers tokens to a recipient
+  - An owner directly transfers tokens to a recipient
   - An approved spender transfers tokens on a recipient on behalf of the owner
-  When new tokens are minted the owner is =0x0=. When existing tokens are burned
-  the recipient is =0x0=
+  When new tokens are minted the owner is ~address(0)~. When existing tokens are
+  burned the recipient is ~address(0)~
   #+BEGIN_SRC solidity
 event Transfer(address indexed own, address indexed rcp, uint val);
   #+END_SRC
 
 **** Views
 
-- Total supply :: The =totalSupply= view returns the total amount of tokens
-  either initially created or incrementally minted, minus the burned tokens
+- Total supply :: The =totalSupply= view returns the total value of tokens
+  either initially supplied or incrementally minted, minus the value of burned
+  tokens
   #+BEGIN_SRC solidity
 function totalSupply() external view returns (uint totSupp);
   #+END_SRC
-- Balance :: The =balanceOf= view returns the balance of an owner
+- Balance :: The =balanceOf= view returns the balance of an owner account
   #+BEGIN_SRC solidity
 function balanceOf(address own) external view (uint bal);
   #+END_SRC
 
 **** Public functions
 
-- Transfer :: The =transfer= function allows an owner (=msg.sender=) to transfer
-  tokens to a recipient and emits the =Transfer= event
+- Transfer :: The =transfer= function allows an owner (=msg.sender=) to directly
+  transfer tokens to a recipient and emits the =Transfer= event
   #+BEGIN_SRC solidity
 function transfer(address rcp, uint val) external returns (bool succ);
   #+END_SRC
@@ -75,14 +76,14 @@ function transfer(address rcp, uint val) external returns (bool succ);
 - Approval :: The =Approval= event is emitted on a successful approval
   - An owner grants a limited permission to a spender to transfer up to a
     maximum value of tokens on behalf of the owner
-    #+BEGIN_SRC solidity
-  event Approval(address indexed own, address indexed spn, uint maxVal);
-    #+END_SRC
+  #+BEGIN_SRC solidity
+event Approval(address indexed own, address indexed spn, uint maxVal);
+  #+END_SRC
 
 **** Views
 
-- Allowance :: The =allowance= view returns the remaining to spend value value
-  for a spender to transfer on behalf of the owner
+- Allowance :: The =allowance= view returns the remaining value for a spender to
+  transfer on behalf of the owner
   #+BEGIN_SRC solidity
 function allowance(address own, address spn) external view returns (uint remVal);
   #+END_SRC
@@ -96,8 +97,8 @@ function allowance(address own, address spn) external view returns (uint remVal)
 function approve(address spn, uint maxVal) external returns (bool succ);
   #+END_SRC
 - Transfer on behalf :: The =transferFrom= function allows an approved spender
-  (=msg.sender=) spender to transfer tokens on a recipient on behalf of the
-  owner and emits the =Transfer= event
+  (=msg.sender=) to transfer tokens to a recipient on behalf of the owner and
+  emits the =Transfer= event
   #+BEGIN_SRC solidity
 function transferFrom(address own, address rcp, uint val) external
   returns (bool succ);
@@ -107,7 +108,7 @@ function transferFrom(address own, address rcp, uint val) external
 
 **** Internal functions
 
-- Mint :: The =mint= function deposits newly created tokens to a recipient
+- Mint :: The =mint= function deposits newly minted tokens to a recipient
   account and emits the =Transfer= event where the sender is ~address(0)~
   #+BEGIN_SRC solidity
 function mint(address rcp, uint val) internal returns (bool);
@@ -118,3 +119,10 @@ function mint(address rcp, uint val) internal returns (bool);
   #+BEGIN_SRC solidity
 function burn(address own, uint val) internal returns (bool);
   #+END_SRC
+
+** Testing and usage
+
+Test the =FungibleToken= contract
+#+BEGIN_SRC nushell
+forge test -vvv --match-contract FungibleToken --match-test .
+#+END_SRC

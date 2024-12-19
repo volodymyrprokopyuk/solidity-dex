@@ -6,7 +6,8 @@ import {IFungibleToken, FungibleToken} from "erc/FungibleToken.sol";
 
 contract Token is FungibleToken {
   constructor(string memory nam, string memory sym, uint8 dec)
-    FungibleToken(nam, sym, dec) { }
+    FungibleToken(nam, sym, dec) {
+  }
 
   function mintTokens(address rcp, uint val) external returns (bool) {
     return mint(rcp, val);
@@ -31,12 +32,12 @@ contract FungibleTokenTest is Test {
     token.mintTokens(owner, supply);
     assertEq(token.totalSupply(), supply);
     assertEq(token.balanceOf(owner), supply);
-    // Create the recipient and the spender
+    // Create a recipient and a spender
     (rcp, spn) = (makeAddr("recipient"), makeAddr("spender"));
   }
 
   function testTransfer() public {
-    // The owner transfers tokens to the recipient
+    // The owner directly transfers tokens to the recipient
     uint val = 1;
     vm.expectEmit(true, true, false, true);
     emit IFungibleToken.Transfer(owner, rcp, val);
@@ -59,14 +60,14 @@ contract FungibleTokenTest is Test {
   }
 
   function testApproveTransferFrom() public {
-    // The owner approves the spender to transfer tokens on the owner's behalf
+    // The owner approves a spender to transfer tokens on the owner's behalf
     uint val = 1;
     vm.expectEmit(true, true, false, true);
     emit IFungibleToken.Approval(owner, spn, val);
     vm.prank(owner);
     token.approve(spn, val);
     assertEq(token.allowance(owner, spn), val);
-    // The spender transfers tokens from the owner to the recipient
+    // The spender transfers tokens from the owner to a recipient
     vm.expectEmit(true, true, false, true);
     emit IFungibleToken.Transfer(owner, rcp, val);
     vm.prank(spn);
@@ -77,7 +78,7 @@ contract FungibleTokenTest is Test {
   }
 
   function testApproveTransferFromErrBeyondAllowance() public {
-    // The owner approves the spender to transfer tokens on the owner's behalf
+    // The owner approves a spender to transfer tokens on the owner's behalf
     uint val = 1;
     vm.expectEmit(true, true, false, true);
     emit IFungibleToken.Approval(owner, spn, val);
@@ -86,17 +87,17 @@ contract FungibleTokenTest is Test {
     assertEq(token.allowance(owner, spn), val);
     // The spender fails to transfer tokens beyond the spender's allowance
     bytes memory err = abi.encodeWithSelector(
-      FungibleToken.ErrBeyondAllowance.selector, owner, spn, val * 2
+      FungibleToken.ErrBeyondAllowance.selector, owner, spn, val + 1
     );
     vm.expectRevert(err);
     vm.prank(spn);
-    token.transferFrom(owner, rcp, val * 2);
+    token.transferFrom(owner, rcp, val + 1);
     assertEq(token.balanceOf(owner), supply);
     assertEq(token.allowance(owner, spn), val);
   }
 
   function testMintBurn() public {
-    // The owner mints new tokens by transferring them to the recipient
+    // The owner mints new tokens by transferring them to a recipient
     uint val = 1;
     vm.expectEmit(true, true, false, true);
     emit IFungibleToken.Transfer(address(0), rcp, val);
@@ -114,7 +115,7 @@ contract FungibleTokenTest is Test {
   }
 
   function testMintBurnErrInsufficientFunds() public {
-    // The owner mints new tokens by transferring them to the recipient
+    // The owner mints new tokens by transferring them to a recipient
     uint val = 1;
     vm.expectEmit(true, true, false, true);
     emit IFungibleToken.Transfer(address(0), rcp, val);
@@ -124,11 +125,11 @@ contract FungibleTokenTest is Test {
     assertEq(token.totalSupply(), supply + val);
     // The owner fails to burn more tokens than the recipient owns
     bytes memory err = abi.encodeWithSelector(
-      FungibleToken.ErrInsufficientFunds.selector, rcp, val * 2
+      FungibleToken.ErrInsufficientFunds.selector, rcp, val + 1
     );
     vm.expectRevert(err);
     vm.prank(owner);
-    token.burnTokens(rcp, val * 2);
+    token.burnTokens(rcp, val + 1);
     assertEq(token.balanceOf(rcp), val);
     assertEq(token.totalSupply(), supply + val);
   }

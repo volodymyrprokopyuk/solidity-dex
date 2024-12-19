@@ -44,7 +44,8 @@ abstract contract FungibleToken is IFungibleToken, Base {
 
   function transfer(address rcp, uint val) external returns (bool) {
     address own = msg.sender;
-    validAddress(rcp); sufficientFunds(own, val);
+    validAddress(rcp);
+    sufficientFunds(own, val);
     balanceOf[own] -= val;
     balanceOf[rcp] += val;
     emit Transfer(own, rcp, val);
@@ -53,7 +54,8 @@ abstract contract FungibleToken is IFungibleToken, Base {
 
   function approve(address spn, uint maxVal) external returns (bool) {
     address own = msg.sender;
-    validAddress(spn); sufficientFunds(own, maxVal);
+    validAddress(spn);
+    sufficientFunds(own, maxVal);
     allowance[own][spn] = maxVal;
     emit Approval(own, spn, maxVal);
     return true;
@@ -62,8 +64,10 @@ abstract contract FungibleToken is IFungibleToken, Base {
   function transferFrom(address own, address rcp, uint val) external
     returns (bool) {
     address spn = msg.sender;
-    validAddress(own); validAddress(rcp);
-    withinAllowance(own, spn, val); sufficientFunds(own, val);
+    validAddress(own);
+    validAddress(rcp);
+    withinAllowance(own, spn, val);
+    sufficientFunds(own, val);
     allowance[own][spn] -= val;
     balanceOf[own] -= val;
     balanceOf[rcp] += val;
