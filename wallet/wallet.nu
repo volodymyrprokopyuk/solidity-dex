@@ -84,15 +84,3 @@ export def "address verify" []: string -> bool {
 
 # "pub.pem" | open | key print --public | get address
 #   | address checksum | address verify | print
-
-
-# key generate | key print | tee { print }
-#   | get address | tee { print }
-#   | address checksum | tee { print }
-#   | address verify
-
-# key generate --private key.pem --public pub.pem
-"key.pem" | open | key print | get address | address checksum | address verify
-
-# def "secp256k1 sign"
-# def "secp256k1 verify"

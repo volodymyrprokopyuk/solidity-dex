@@ -7,6 +7,8 @@
 - [[#concepts-and-purpose][Concepts and purpose]]
 - [[#design-and-implementation][Design and implementation]]
 - [[#testing-and-usage][Testing and usage]]
+  - [[#using--address-checksum-and-address-verify-functions][Using  address checksum and address verify functions]]
+  - [[#testing-address-checksum-and-address-verify-function][Testing address checksum and address verify function]]
 :END:
 
 ** Concepts and purpose
@@ -27,7 +29,8 @@
   incorporate an error detecting checksum. The address checksum function
   - Compute the keccak256 hash of the address converted to the lower case
   - Upper case each character of the address if the hex value of the
-    corresponding char of the hash is greater than or equal to 8
+    corresponding character of the hash is greater than or equal to 8, leaving
+    other characters of the address unchanged
   - Return the encoded mixed-case address
     #+BEGIN_SRC nushell
   export def "address checksum" []: string -> string {
@@ -64,7 +67,7 @@
 
 *** Using  =address checksum= and =address verify= functions
 
-- Generate a key pair
+- Generate a secp256k1 key pair
   #+BEGIN_SRC nushell
 key generate --private key.pem --public pub.pem
 # -----BEGIN EC PRIVATE KEY-----
@@ -77,7 +80,7 @@ key generate --private key.pem --public pub.pem
 # NVpnC28oHtG9UduGSujB4wx4VA5dyFbf/QARQrnr0ff7lo7HbyvARQ==
 # -----END PUBLIC KEY-----
   #+END_SRC
-- Print key pair information
+- Print the secp256k1 key pair information
   #+BEGIN_SRC nushell
 "key.pem" | open | key print
 # ╭─────────┬──────────────────────────────────────────────────────────────────╮
@@ -87,17 +90,18 @@ key generate --private key.pem --public pub.pem
 # │ address │ 4a8babaf85fef398358be49d48d9857ae9837010                         │
 # ╰─────────┴──────────────────────────────────────────────────────────────────╯
   #+END_SRC
-- Compute Ethereum address from the public key
+- Compute the Ethereum address from the public key
   #+BEGIN_SRC nushell
 "key.pem" | open | key print | get address
 # 4a8babaf85fef398358be49d48d9857ae9837010
   #+END_SRC
-- Encode Ethereum address and incorporate the checksum
+- Encode the Ethereum address and incorporate the error detecting checksum
   #+BEGIN_SRC nushell
 "key.pem" | open | key print | get address | address checksum
 # 4a8bAbaf85fEF398358Be49d48d9857Ae9837010
   #+END_SRC
-- Verify the encoded Ethereum address
+- Verify that the encoded Ethereum address does not have errors with the 99.986%
+  accuracy
   #+BEGIN_SRC nushell
 "key.pem" | open | key print | get address | address checksum | address verify
 # true
