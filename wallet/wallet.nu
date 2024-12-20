@@ -84,3 +84,20 @@ export def "address verify" []: string -> bool {
 
 # "pub.pem" | open | key print --public | get address
 #   | address checksum | address verify | print
+
+def "key sign" [key: path]: string -> string {
+  openssl pkeyutl -sign -inkey $key
+}
+
+# "message" | hash keccak256 | key sign key.pem | encode base64 | print
+
+def "key verify" [pub: path, sig: string]: string -> bool {
+  let tmp = mktemp --tmpdir --suffix .sig
+  $sig | decode base64 | save --raw --force $tmp
+  $in | openssl pkeyutl -verify -pubin -inkey $pub -sigfile $tmp
+    | $in =~ 'Success'
+}
+
+# let sig = "message" | hash keccak256 | key sign key.pem | encode base64
+# "message" | hash keccak256 | key verify pub.pem $sig | print
+# "messagex" | hash keccak256 | key verify pub.pem $sig | print
