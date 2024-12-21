@@ -37,30 +37,27 @@ def parse-key [key: string]: list<string> -> string {
 }
 
 def "key print" [--pub]: string -> record {
-  if $public {
+  if $pub {
     openssl ec -pubin -text -noout
   } else {
     openssl ec -text -noout
   } | lines | do {
     let key = $in | parse-key "priv:"
-    let pub = $in | parse-key "pub:"
-    let pubx = $pub | str substring 2..65
-    let puby = $pub | str substring 66..129
-    let addr = $pub | str substring 2..129 | hash keccak256
-      | str substring 24..63
-    { key: $key, pubx: $pubx, puby: $puby, address: $addr }
+    let pub = $in | parse-key "pub:" | str substring 2..129
+    let addr = $pub | hash keccak256 | str substring 24..63
+    { key: $key, pub: $pub, address: $addr }
   }
 }
 
 # "key.pem" | open | key print | print
-# "pub.pem" | open | key print --public | print
-# "pub.pem" | open | key print --public | get address | print
+# "pub.pem" | open | key print --pub | print
+# "pub.pem" | open | key print --pub | get address | print
 
 def "key sign" [key: path]: string -> string {
-  openssl pkeyutl -sign -inkey $key
+  openssl pkeyutl -sign -inkey $key | encode base64
 }
 
-# "message" | hash keccak256 | key sign key.pem | encode base64 | print
+# "message" | hash keccak256 | key sign key.pem | print
 
 def "key verify" [pub: path, sig: string]: string -> bool {
   let tmp = mktemp --tmpdir --suffix .sig
@@ -69,17 +66,21 @@ def "key verify" [pub: path, sig: string]: string -> bool {
     | $in =~ 'Success'
 }
 
-# let sig = "message" | hash keccak256 | key sign key.pem | encode base64
+# let sig = "message" | hash keccak256 | key sign key.pem
+# $sig | print
 # "message" | hash keccak256 | key verify pub.pem $sig | print
 # "messagex" | hash keccak256 | key verify pub.pem $sig | print
 
-# $env.PATH = $env.PATH | prepend ("../secp256k1" | path expand)
+$env.PATH = $env.PATH | prepend ("../secp256k1" | path expand)
+
 # let k = "/dev/urandom" | open | first 32 | hash keccak256 | secp256k1 derive
 #   | from yaml
-# $k | print
-# let sig = "message" | hash keccak256 | secp256k1 sign --key $k.key
-# $sig | print
-# "message" | hash keccak256 | secp256k1 verify --sig $sig --pub $k.pub | print
+
+# let k = "key.pem" | open | key print | get address | secp256k1 derive | from yaml
+# let sig2 = "message" | hash keccak256 | secp256k1 sign --key $k.key
+# $sig2 | print
+# "message" | hash keccak256 | secp256k1 verify --sig $sig2 --pub $k.pub | print
+# "messagex" | hash keccak256 | secp256k1 verify --sig $sig2 --pub $k.pub | print
 
 export def "address checksum" []: string -> string {
   let addr = $in | split chars
@@ -91,7 +92,7 @@ export def "address checksum" []: string -> string {
   } | str join
 }
 
-# "pub.pem" | open | key print --public | get address | address checksum | print
+# "pub.pem" | open | key print --pub | get address | address checksum | print
 
 export def "address verify" []: string -> bool {
   let addr = $in | split chars
@@ -103,5 +104,5 @@ export def "address verify" []: string -> bool {
   }
 }
 
-# "pub.pem" | open | key print --public | get address
-#   | address checksum | address verify | print
+# "pub.pem" | open | key print --pub | get address | address checksum
+#   | address verify | print
