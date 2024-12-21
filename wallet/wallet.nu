@@ -1,17 +1,17 @@
 #!/usr/bin/env nu
 
 def "hash sha256" []: [binary -> string, string -> string] {
-  # $in | sha256sum | str substring 0..63 | print
+  # $in | sha256sum | str substring 0..63
   $in | openssl dgst -sha256 -r | str substring 0..63
 }
 
 def "hash keccak256" []: [binary -> string, string -> string] {
-  # $in | keccak-256sum | str substring 0..63 | print
+  # $in | keccak-256sum | str substring 0..63
   $in | openssl dgst -keccak-256 -r | str substring 0..63
 }
 
 def "hash sha3-256" []: [binary -> string, string -> string] {
-  # $in | sha3-256sum | str substring 0..63 | print
+  # $in | sha3-256sum | str substring 0..63
   $in | openssl dgst -sha3-256 -r | str substring 0..63
 }
 
@@ -19,32 +19,28 @@ def "hash ripemd160" []: [binary -> string, string -> string] {
   $in | openssl dgst -ripemd160 -r | str substring 0..40
 }
 
-def "key generate" [
-  --private: path = "key.pem", --public: path
-] [nothing -> string] {
+def "key generate" [--key: path = "key.pem", --pub: path]: [nothing -> string] {
   openssl ecparam -genkey -name secp256k1 -noout
-    | tee { save --force $private } | tee { print }
-    | do {
-      if ($public | is-not-empty) {
-        $in | openssl ec -pubout e> /dev/null
-          | tee { save --force $public } | print
+    | tee { save --force $key } | tee { print } | do {
+      if ($pub | is-not-empty) {
+        $in | openssl ec -pubout | tee { save --force $pub } | print
       }
       $in
     }
 }
 
-# key generate --public pub.pem | print
+# key generate --key key.pem --pub pub.pem | print
 
 def parse-key [key: string]: list<string> -> string {
   skip until { $in =~ $key } | skip 1 | take while { $in =~ '^\s+' }
     | each { str replace --all --regex '[\s:]' "" } | str join
 }
 
-def "key print" [--public]: string -> record {
+def "key print" [--pub]: string -> record {
   if $public {
-    openssl ec -pubin -text -noout e> /dev/null
+    openssl ec -pubin -text -noout
   } else {
-    openssl ec -text -noout e> /dev/null
+    openssl ec -text -noout
   } | lines | do {
     let key = $in | parse-key "priv:"
     let pub = $in | parse-key "pub:"
@@ -59,6 +55,31 @@ def "key print" [--public]: string -> record {
 # "key.pem" | open | key print | print
 # "pub.pem" | open | key print --public | print
 # "pub.pem" | open | key print --public | get address | print
+
+def "key sign" [key: path]: string -> string {
+  openssl pkeyutl -sign -inkey $key
+}
+
+# "message" | hash keccak256 | key sign key.pem | encode base64 | print
+
+def "key verify" [pub: path, sig: string]: string -> bool {
+  let tmp = mktemp --tmpdir --suffix .sig
+  $sig | decode base64 | save --raw --force $tmp
+  $in | openssl pkeyutl -verify -pubin -inkey $pub -sigfile $tmp
+    | $in =~ 'Success'
+}
+
+# let sig = "message" | hash keccak256 | key sign key.pem | encode base64
+# "message" | hash keccak256 | key verify pub.pem $sig | print
+# "messagex" | hash keccak256 | key verify pub.pem $sig | print
+
+# $env.PATH = $env.PATH | prepend ("../secp256k1" | path expand)
+# let k = "/dev/urandom" | open | first 32 | hash keccak256 | secp256k1 derive
+#   | from yaml
+# $k | print
+# let sig = "message" | hash keccak256 | secp256k1 sign --key $k.key
+# $sig | print
+# "message" | hash keccak256 | secp256k1 verify --sig $sig --pub $k.pub | print
 
 export def "address checksum" []: string -> string {
   let addr = $in | split chars
@@ -84,20 +105,3 @@ export def "address verify" []: string -> bool {
 
 # "pub.pem" | open | key print --public | get address
 #   | address checksum | address verify | print
-
-def "key sign" [key: path]: string -> string {
-  openssl pkeyutl -sign -inkey $key
-}
-
-# "message" | hash keccak256 | key sign key.pem | encode base64 | print
-
-def "key verify" [pub: path, sig: string]: string -> bool {
-  let tmp = mktemp --tmpdir --suffix .sig
-  $sig | decode base64 | save --raw --force $tmp
-  $in | openssl pkeyutl -verify -pubin -inkey $pub -sigfile $tmp
-    | $in =~ 'Success'
-}
-
-# let sig = "message" | hash keccak256 | key sign key.pem | encode base64
-# "message" | hash keccak256 | key verify pub.pem $sig | print
-# "messagex" | hash keccak256 | key verify pub.pem $sig | print
