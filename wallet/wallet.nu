@@ -36,22 +36,28 @@ def parse-key [key: string]: list<string> -> string {
     | each { str replace --all --regex '[\s:]' "" } | str join
 }
 
-def "key print" [--pub]: string -> record {
+def "key private" []: string -> string {
+  openssl ec -text -noout | lines | parse-key "priv:"
+}
+
+# "key.pem" | open | key private | print
+
+def "key public" [--pub]: string -> string {
   if $pub {
     openssl ec -pubin -text -noout
   } else {
     openssl ec -text -noout
-  } | lines | do {
-    let key = $in | parse-key "priv:"
-    let pub = $in | parse-key "pub:" | str substring 2..129
-    let addr = $pub | hash keccak256 | str substring 24..63
-    { key: $key, pub: $pub, address: $addr }
-  }
+  } | lines | parse-key "pub:" | str substring 2..129
 }
 
-# "key.pem" | open | key print | print
-# "pub.pem" | open | key print --pub | print
-# "pub.pem" | open | key print --pub | get address | print
+# "key.pem" | open | key public | print
+# "pub.pem" | open | key public --pub | print
+
+def "key address" []: string -> string {
+  $in | hash keccak256 | str substring 24..63
+}
+
+# "pub.pem" | open | key public --pub | key address | print
 
 def "key sign" [key: path]: string -> string {
   openssl pkeyutl -sign -inkey $key | encode base64
@@ -71,12 +77,12 @@ def "key verify" [pub: path, sig: string]: string -> bool {
 # "message" | hash keccak256 | key verify pub.pem $sig | print
 # "messagex" | hash keccak256 | key verify pub.pem $sig | print
 
-$env.PATH = $env.PATH | prepend ("../secp256k1" | path expand)
+# $env.PATH = $env.PATH | prepend ("../secp256k1" | path expand)
 
 # let k = "/dev/urandom" | open | first 32 | hash keccak256 | secp256k1 derive
 #   | from yaml
 
-# let k = "key.pem" | open | key print | get address | secp256k1 derive | from yaml
+# let k = "key.pem" | open | key public | key address | secp256k1 derive | from yaml
 # let sig2 = "message" | hash keccak256 | secp256k1 sign --key $k.key
 # $sig2 | print
 # "message" | hash keccak256 | secp256k1 verify --sig $sig2 --pub $k.pub | print
@@ -92,7 +98,7 @@ export def "address checksum" []: string -> string {
   } | str join
 }
 
-# "pub.pem" | open | key print --pub | get address | address checksum | print
+# "pub.pem" | open | key public --pub | key address | address checksum | print
 
 export def "address verify" []: string -> bool {
   let addr = $in | split chars
@@ -104,5 +110,5 @@ export def "address verify" []: string -> bool {
   }
 }
 
-# "pub.pem" | open | key print --pub | get address | address checksum
+# "pub.pem" | open | key public --pub | key address | address checksum
 #   | address verify | print
