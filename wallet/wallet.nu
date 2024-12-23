@@ -88,6 +88,47 @@ def "key verify" [pub: path, sig: string]: string -> bool {
 # "message" | hash keccak256 | secp256k1 verify --sig $sig2 --pub $k.pub | print
 # "messagex" | hash keccak256 | secp256k1 verify --sig $sig2 --pub $k.pub | print
 
+export def "mnemonic generate" [bits: int]: string -> string {
+  if ($bits not-in [128, 160, 192, 224, 256]) {
+    error make {msg: $"invalid bits length: ($bits)"}
+  }
+  let seqlen = $bits // 8
+  $in | decode hex | take $seqlen | do {
+    let hash = $in | hash sha256 | decode hex
+    $in ++ ($hash | take 1) # the random sequence with the checksum
+  } | do {
+    let sumlen = $bits // 32
+    let wrdlen = ($bits + $sumlen) // 11
+    let rseq = $in
+    0..<$wrdlen | each {|i|
+      $rseq | bits shl ($i * 11) | take 2 | bits shr 5
+        | bytes reverse | into int # the word index in a dictionary
+    }
+  } | do {
+    let words = "dictionary.txt" | open | lines
+    $in | each {|idx| $words | get $idx } # lookup words by index in a dictionary
+  } | str join " "
+}
+
+export def "mnemonic recover" [bits: int]: string -> string {
+  if ($bits not-in [128, 160, 192, 224, 256]) {
+    error make {msg: $"invalid bits length: ($bits)"}
+  }
+  let seqlen = $bits // 8
+  let idx = "dictionary.txt" | open | lines | enumerate
+    | each { {$in.item: $in.index} } | into record
+  $in | split words | each {|w| $idx | get $w } | reverse # word indices
+    | reduce --fold 0x[] {|idx, rseq|
+      let binidx = $idx | into binary | take 2 | bytes reverse
+      $rseq | bytes add $binidx | bits shl 5
+    } | take $seqlen | encode hex --lower
+}
+
+# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128 |
+#   | mnemonic recover 128 | print
+# "2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c"
+#   | mnemonic generate 256 | mnemonic recover 256 | print
+
 export def "address checksum" []: string -> string {
   let addr = $in | split chars
   let hash = $in | str downcase | hash keccak256 | split chars
