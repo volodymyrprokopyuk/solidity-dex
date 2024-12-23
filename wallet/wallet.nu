@@ -110,6 +110,10 @@ export def "mnemonic generate" [bits: int]: string -> string {
   } | str join " "
 }
 
+# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128 | print
+# "2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c"
+#   | mnemonic generate 256 | print
+
 export def "mnemonic recover" [bits: int]: string -> string {
   if ($bits not-in [128, 160, 192, 224, 256]) {
     error make {msg: $"invalid bits length: ($bits)"}
@@ -128,6 +132,18 @@ export def "mnemonic recover" [bits: int]: string -> string {
 #   | mnemonic recover 128 | print
 # "2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c"
 #   | mnemonic generate 256 | mnemonic recover 256 | print
+
+export def "seed derive" [--passphrase: string = ""]: string -> string {
+  let pass = $in | encode hex --lower # a mnemonic
+  let salt = "mnemonic" + $passphrase | encode hex --lower # optional passphrase
+  (openssl kdf -kdfopt digest:sha512 -kdfopt iter:2048 -keylen 64 -binary
+   -kdfopt hexpass:($pass) -kdfopt hexsalt:($salt) pbkdf2) | encode hex --lower
+}
+
+# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128
+#   | seed derive | print
+# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128
+#   | seed derive --passphrase SuperDuperSecret | print
 
 export def "address checksum" []: string -> string {
   let addr = $in | split chars
