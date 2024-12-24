@@ -1,63 +1,169 @@
 #!/usr/bin/env nu
 
+# $env.PATH = $env.PATH | prepend ("../secp256k1" | path expand)
+
 def "hash sha256" []: [binary -> string, string -> string] {
-  # $in | sha256sum | str substring 0..63
-  $in | openssl dgst -sha256 -r | str substring 0..63
+  let msg = $in
+  # let hash = $msg | sha256sum | str substring 0..63
+  let hash = $msg | openssl dgst -sha256 -r | str substring 0..63
+  $hash
+}
+
+def "hash sha512" []: [binary -> string, string -> string] {
+  let msg = $in
+  # let hash = $msg | sha512sum | str substring 0..127
+  let hash = $msg | openssl dgst -sha512 -r | str substring 0..127
+  $hash
 }
 
 def "hash keccak256" []: [binary -> string, string -> string] {
-  # $in | keccak-256sum | str substring 0..63
-  $in | openssl dgst -keccak-256 -r | str substring 0..63
+  let msg = $in
+  # let hash = $msg | keccak-256sum | str substring 0..63
+  let hash = $msg | openssl dgst -keccak-256 -r | str substring 0..63
+  $hash
 }
 
-def "hash sha3-256" []: [binary -> string, string -> string] {
-  # $in | sha3-256sum | str substring 0..63
-  $in | openssl dgst -sha3-256 -r | str substring 0..63
+def "key generate" [keyPath: path, pubPath: path] {
+  let key = openssl ecparam -genkey -name secp256k1 -noout
+    | tee { save --force $keyPath }
+  $key | openssl ec -pubout | save --force $pubPath
 }
 
-def "hash ripemd160" []: [binary -> string, string -> string] {
-  $in | openssl dgst -ripemd160 -r | str substring 0..40
-}
+# key generate key.pem pub.pem
 
-def "key generate" [--key: path = "key.pem", --pub: path]: [nothing -> string] {
-  openssl ecparam -genkey -name secp256k1 -noout
-    | tee { save --force $key } | tee { print } | do {
-      if ($pub | is-not-empty) {
-        $in | openssl ec -pubout | tee { save --force $pub } | print
-      }
-      $in
-    }
-}
-
-# key generate --key key.pem --pub pub.pem | print
-
-def parse-key [key: string]: list<string> -> string {
-  skip until { $in =~ $key } | skip 1 | take while { $in =~ '^\s+' }
+def parse-key [keyName: string]: string -> string {
+  let strKey = $in
+  let hexKey = $strKey | lines | skip until { $in =~ $keyName } | skip 1
+    | take while { $in =~ '^\s+' }
     | each { str replace --all --regex '[\s:]' "" } | str join
+  $hexKey
 }
 
 def "key private" []: string -> string {
-  openssl ec -text -noout | lines | parse-key "priv:"
+  let keyFile = $in
+  let hexKey = $keyFile | open | openssl ec -text -noout | parse-key "priv:"
+  $hexKey
 }
 
-# "key.pem" | open | key private | print
+# "key.pem" | key private | print
 
-def "key public" [--pub]: string -> string {
-  if $pub {
+def "key public" [--pub-in]: string -> string {
+  let keyFile = $in
+  let hexPub = $keyFile | open | if $pub_in {
     openssl ec -pubin -text -noout
   } else {
     openssl ec -text -noout
-  } | lines | parse-key "pub:" | str substring 2..129
+  } | parse-key "pub:" | str substring 2..129
+  $hexPub
 }
 
-# "key.pem" | open | key public | print
-# "pub.pem" | open | key public --pub | print
+# "key.pem" | key public | print
+# "pub.pem" | key public --pub-in | print
 
 def "key address" []: string -> string {
-  $in | hash keccak256 | str substring 24..63
+  let pub = $in
+  let addr = $pub | hash keccak256 | str substring 24..63
+  $addr
 }
 
-# "pub.pem" | open | key public --pub | key address | print
+# "pub.pem" | key public --pub-in | key address | print
+# "key.pem" | key private | secp256k1 derive | from yaml | print
+
+export def "address checksum" []: string -> string {
+  let strAddr = $in
+  let chAddr = $strAddr | split chars
+  let chHash = $strAddr | str downcase | hash keccak256 | split chars
+  let addrSum = $chAddr | zip $chHash | each {
+    let a = $in.0
+    let h = $in.1 | into int --radix 16
+    if ($h >= 8) { $a | str upcase } else { $a }
+  } | str join
+  $addrSum
+}
+
+# "pub.pem" | key public --pub-in | key address | address checksum | print
+
+export def "address verify" []: string -> bool {
+  let addrSum = $in
+  let chAddr = $addrSum | split chars
+  let chHash = $addrSum | str downcase | hash keccak256 | split chars
+  let valid = $chAddr | zip $chHash | all {
+    let a = $in.0
+    let h = $in.1 | into int --radix 16
+    if ($h >= 8) { $a =~ '[A-F0-9]' } else { $a =~ '[a-z0-9]' }
+  }
+  $valid
+}
+
+# "pub.pem" | key public --pub-in | key address | address checksum
+#   | address verify | print
+
+export def "mnemonic generate" [bits: int]: string -> string {
+  if ($bits not-in [128, 160, 192, 224, 256]) {
+    error make {msg: $"invalid bits length: ($bits)"}
+  }
+  let inSeq = $in
+  let seqBytes = $bits // 8
+  let seq = $inSeq | decode hex | take $seqBytes
+  let hash = $seq | hash sha256 | decode hex
+  let seqSum = $seq ++ ($hash | take 1)
+  let wrdLen = ($bits + ($bits // 32)) // 11
+  let wrdIdx = 0..<$wrdLen | each {|i|
+    $seqSum | bits shl ($i * 11) | take 2 | bits shr 5 | bytes reverse | into int
+  }
+  let words = "dictionary.txt" | open | lines
+  let mnemonic = $wrdIdx | each {|idx| $words | get $idx } | str join " "
+  $mnemonic
+}
+
+# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128 | print
+# "2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c"
+#   | mnemonic generate 256 | print
+
+export def "mnemonic recover" [bits: int]: string -> string {
+  if ($bits not-in [128, 160, 192, 224, 256]) {
+    error make {msg: $"invalid bits length: ($bits)"}
+  }
+  let mnemonic = $in
+  let seqBytes = $bits // 8
+  let words = "dictionary.txt" | open | lines | enumerate
+    | each { {$in.item: $in.index} } | into record
+  let wrdIdx = $mnemonic | split words | each {|w| $words | get $w } | reverse
+  let seq = $wrdIdx | reduce --fold 0x[] {|decIdx, seq|
+    let hexIdx = $decIdx | into binary | take 2 | bytes reverse
+    $seq | bytes add $hexIdx | bits shl 5
+  } | take $seqBytes | encode hex --lower
+  $seq
+}
+
+# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128 |
+#   | mnemonic recover 128 | print
+# "2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c"
+#   | mnemonic generate 256 | mnemonic recover 256 | print
+
+export def "seed derive" [--passphrase: string = ""]: string -> string {
+  let mnemonic = $in
+  let pass = $mnemonic | encode hex --lower
+  let salt = "mnemonic" + $passphrase | encode hex --lower
+  (openssl kdf -kdfopt digest:sha512 -kdfopt iter:2048 -keylen 64 -binary
+   -kdfopt hexpass:($pass) -kdfopt hexsalt:($salt) pbkdf2) | encode hex --lower
+}
+
+# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128
+#   | seed derive | print
+# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128
+#   | seed derive --passphrase SuperDuperSecret | print
+
+def "master derive" []: string -> record {
+  let hash = $in | hash sha512
+  let mkey = $hash | str substring 0..63
+  let mpub = $hash | secp256k1 derive | from yaml | get pub
+  let mcode = $hash | str substring 64..127
+  {mkey: $mkey, mpub: $mpub, mcode: $mcode}
+}
+
+# "key.pem" | open | key private | print
+# "key.pem" | open | key public | tee { print } | str length | print
 
 def "key sign" [key: path]: string -> string {
   openssl pkeyutl -sign -inkey $key | encode base64
@@ -77,8 +183,6 @@ def "key verify" [pub: path, sig: string]: string -> bool {
 # "message" | hash keccak256 | key verify pub.pem $sig | print
 # "messagex" | hash keccak256 | key verify pub.pem $sig | print
 
-# $env.PATH = $env.PATH | prepend ("../secp256k1" | path expand)
-
 # let k = "/dev/urandom" | open | first 32 | hash keccak256 | secp256k1 derive
 #   | from yaml
 
@@ -87,85 +191,3 @@ def "key verify" [pub: path, sig: string]: string -> bool {
 # $sig2 | print
 # "message" | hash keccak256 | secp256k1 verify --sig $sig2 --pub $k.pub | print
 # "messagex" | hash keccak256 | secp256k1 verify --sig $sig2 --pub $k.pub | print
-
-export def "mnemonic generate" [bits: int]: string -> string {
-  if ($bits not-in [128, 160, 192, 224, 256]) {
-    error make {msg: $"invalid bits length: ($bits)"}
-  }
-  let seqlen = $bits // 8
-  $in | decode hex | take $seqlen | do {
-    let hash = $in | hash sha256 | decode hex
-    $in ++ ($hash | take 1) # the random sequence with the checksum
-  } | do {
-    let sumlen = $bits // 32
-    let wrdlen = ($bits + $sumlen) // 11
-    let rseq = $in
-    0..<$wrdlen | each {|i|
-      $rseq | bits shl ($i * 11) | take 2 | bits shr 5
-        | bytes reverse | into int # the word index in a dictionary
-    }
-  } | do {
-    let words = "dictionary.txt" | open | lines
-    $in | each {|idx| $words | get $idx } # lookup words by index in a dictionary
-  } | str join " "
-}
-
-# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128 | print
-# "2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c"
-#   | mnemonic generate 256 | print
-
-export def "mnemonic recover" [bits: int]: string -> string {
-  if ($bits not-in [128, 160, 192, 224, 256]) {
-    error make {msg: $"invalid bits length: ($bits)"}
-  }
-  let seqlen = $bits // 8
-  let idx = "dictionary.txt" | open | lines | enumerate
-    | each { {$in.item: $in.index} } | into record
-  $in | split words | each {|w| $idx | get $w } | reverse # word indices
-    | reduce --fold 0x[] {|idx, rseq|
-      let binidx = $idx | into binary | take 2 | bytes reverse
-      $rseq | bytes add $binidx | bits shl 5
-    } | take $seqlen | encode hex --lower
-}
-
-# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128 |
-#   | mnemonic recover 128 | print
-# "2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c"
-#   | mnemonic generate 256 | mnemonic recover 256 | print
-
-export def "seed derive" [--passphrase: string = ""]: string -> string {
-  let pass = $in | encode hex --lower # a mnemonic
-  let salt = "mnemonic" + $passphrase | encode hex --lower # optional passphrase
-  (openssl kdf -kdfopt digest:sha512 -kdfopt iter:2048 -keylen 64 -binary
-   -kdfopt hexpass:($pass) -kdfopt hexsalt:($salt) pbkdf2) | encode hex --lower
-}
-
-# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128
-#   | seed derive | print
-# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128
-#   | seed derive --passphrase SuperDuperSecret | print
-
-export def "address checksum" []: string -> string {
-  let addr = $in | split chars
-  let hash = $in | str downcase | hash keccak256 | split chars
-  $addr | zip $hash | each {
-    let a = $in.0
-    let h = $in.1 | into int --radix 16
-    if ($h >= 8) { $a | str upcase } else { $a }
-  } | str join
-}
-
-# "pub.pem" | open | key public --pub | key address | address checksum | print
-
-export def "address verify" []: string -> bool {
-  let addr = $in | split chars
-  let hash = $in | str downcase | hash keccak256 | split chars
-  $addr | zip $hash | all {
-    let a = $in.0
-    let h = $in.1 | into int --radix 16
-    if ($h >= 8) { $a =~ '[A-F0-9]' } else { $a =~ '[a-z0-9]' }
-  }
-}
-
-# "pub.pem" | open | key public --pub | key address | address checksum
-#   | address verify | print

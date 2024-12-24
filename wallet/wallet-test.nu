@@ -61,11 +61,12 @@ def "test address verify" [] {
   $cases | each { assert equal ($in.addr | address verify) $in.exp }
 }
 
-# test mnemonic generate
-# test mnemonic recover
+test mnemonic generate
+test mnemonic recover
+
 test seed derive
 
-# test address checksum
-# test address verify
+test address checksum
+test address verify
 
 print success

@@ -10,7 +10,7 @@ import (
 )
 
 func formatKey(key *ecdsa.PrivateKey) string {
-  return fmt.Sprintf("{key: %x, pub: %x%x}", key.D, key.X, key.Y)
+  return fmt.Sprintf("{key: %064x, pub: %064x%064x}", key.D, key.X, key.Y)
 }
 
 func secp256k1Cmd() *cobra.Command {
