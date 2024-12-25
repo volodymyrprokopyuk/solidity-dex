@@ -2,30 +2,36 @@
 
 # $env.PATH = $env.PATH | prepend ("../secp256k1" | path expand)
 
-def "hash sha256" []: [binary -> string, string -> string] {
+export def "hash sha256" []: [binary -> string, string -> string] {
   let msg = $in
-  # let hash = $msg | sha256sum | str substring 0..63
-  let hash = $msg | openssl dgst -sha256 -r | str substring 0..63
+  let hash = $msg | openssl dgst -sha256 -binary | encode hex --lower
   $hash
 }
 
-def "hash sha512" []: [binary -> string, string -> string] {
+# "message" | hash sha256 | print
+# 0x[1a2b] | hash sha256 | print
+
+export def "hash keccak256" []: [binary -> string, string -> string] {
   let msg = $in
-  # let hash = $msg | sha512sum | str substring 0..127
-  let hash = $msg | openssl dgst -sha512 -r | str substring 0..127
+  let hash = $msg | openssl dgst -keccak-256 -binary | encode hex --lower
   $hash
 }
 
-def "hash keccak256" []: [binary -> string, string -> string] {
+# "message" | hash keccak256 | print
+# 0x[1a2b] | hash keccak256 | print
+
+export def "hash hmac-sha512" [key: string]: [binary -> string, string -> string] {
   let msg = $in
-  # let hash = $msg | keccak-256sum | str substring 0..63
-  let hash = $msg | openssl dgst -keccak-256 -r | str substring 0..63
+  let hash = $msg | openssl dgst -sha512 -hmac $key -binary | encode hex --lower
   $hash
 }
+
+# "message" | hash hmac-sha512 "key" | print
+# 0x[1a2b] | hash hmac-sha512 "key" | print
 
 def "key generate" [keyPath: path, pubPath: path] {
   let key = openssl ecparam -genkey -name secp256k1 -noout
-    | tee { save --force $keyPath }
+  $key | save --force $keyPath
   $key | openssl ec -pubout | save --force $pubPath
 }
 
@@ -34,8 +40,8 @@ def "key generate" [keyPath: path, pubPath: path] {
 def parse-key [keyName: string]: string -> string {
   let strKey = $in
   let hexKey = $strKey | lines | skip until { $in =~ $keyName } | skip 1
-    | take while { $in =~ '^\s+' }
-    | each { str replace --all --regex '[\s:]' "" } | str join
+    | take while { $in =~ '^\s+' } | str join
+    | str replace --all --regex '[\s:]' ""
   $hexKey
 }
 
@@ -98,7 +104,7 @@ export def "address verify" []: string -> bool {
 # "pub.pem" | key public --pub-in | key address | address checksum
 #   | address verify | print
 
-export def "mnemonic generate" [bits: int]: string -> string {
+export def "seed generate" [bits: int]: string -> string {
   if ($bits not-in [128, 160, 192, 224, 256]) {
     error make {msg: $"invalid bits length: ($bits)"}
   }
@@ -116,11 +122,11 @@ export def "mnemonic generate" [bits: int]: string -> string {
   $mnemonic
 }
 
-# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128 | print
+# "0c1e24e5917779d297e14d45f14e1a1a" | seed generate 128 | print
 # "2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c"
-#   | mnemonic generate 256 | print
+#   | seed generate 256 | print
 
-export def "mnemonic recover" [bits: int]: string -> string {
+export def "seed recover" [bits: int]: string -> string {
   if ($bits not-in [128, 160, 192, 224, 256]) {
     error make {msg: $"invalid bits length: ($bits)"}
   }
@@ -136,10 +142,10 @@ export def "mnemonic recover" [bits: int]: string -> string {
   $seq
 }
 
-# "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128 |
-#   | mnemonic recover 128 | print
+# "0c1e24e5917779d297e14d45f14e1a1a" | seed generate 128 |
+#   | seed recover 128 | print
 # "2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c"
-#   | mnemonic generate 256 | mnemonic recover 256 | print
+#   | seed generate 256 | seed recover 256 | print
 
 export def "seed derive" [--passphrase: string = ""]: string -> string {
   let mnemonic = $in
@@ -154,13 +160,13 @@ export def "seed derive" [--passphrase: string = ""]: string -> string {
 # "0c1e24e5917779d297e14d45f14e1a1a" | mnemonic generate 128
 #   | seed derive --passphrase SuperDuperSecret | print
 
-def "master derive" []: string -> record {
-  let hash = $in | hash sha512
-  let mkey = $hash | str substring 0..63
-  let mpub = $hash | secp256k1 derive | from yaml | get pub
-  let mcode = $hash | str substring 64..127
-  {mkey: $mkey, mpub: $mpub, mcode: $mcode}
-}
+# def "master derive" []: string -> record {
+#   let hash = $in | hash sha512
+#   let mkey = $hash | str substring 0..63
+#   let mpub = $hash | secp256k1 derive | from yaml | get pub
+#   let mcode = $hash | str substring 64..127
+#   {mkey: $mkey, mpub: $mpub, mcode: $mcode}
+# }
 
 # "key.pem" | open | key private | print
 # "key.pem" | open | key public | tee { print } | str length | print
