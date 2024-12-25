@@ -45,7 +45,7 @@ def parse-key [keyName: string]: string -> string {
   $hexKey
 }
 
-def "key private" []: string -> string {
+def "key private" []: path -> string {
   let keyFile = $in
   let hexKey = $keyFile | open | openssl ec -text -noout | parse-key "priv:"
   $hexKey
@@ -53,7 +53,7 @@ def "key private" []: string -> string {
 
 # "key.pem" | key private | print
 
-def "key public" [--pub-in]: string -> string {
+def "key public" [--pub-in]: path -> string {
   let keyFile = $in
   let hexPub = $keyFile | open | if $pub_in {
     openssl ec -pubin -text -noout
@@ -108,14 +108,14 @@ export def "seed generate" [bits: int]: string -> string {
   if ($bits not-in [128, 160, 192, 224, 256]) {
     error make {msg: $"invalid bits length: ($bits)"}
   }
-  let inSeq = $in
-  let seqBytes = $bits // 8
-  let seq = $inSeq | decode hex | take $seqBytes
-  let hash = $seq | hash sha256 | decode hex
-  let seqSum = $seq ++ ($hash | take 1)
+  let rseq = $in
+  let seed = $rseq | decode hex | take ($bits // 8)
+  let hash = $seed | hash sha256 | decode hex
+  let seedSum = $seed ++ ($hash | take 1)
   let wrdLen = ($bits + ($bits // 32)) // 11
   let wrdIdx = 0..<$wrdLen | each {|i|
-    $seqSum | bits shl ($i * 11) | take 2 | bits shr 5 | bytes reverse | into int
+    $seedSum | bits shl ($i * 11) | take 2 | bits shr 5
+      | bytes reverse | into int
   }
   let words = "dictionary.txt" | open | lines
   let mnemonic = $wrdIdx | each {|idx| $words | get $idx } | str join " "
@@ -131,15 +131,14 @@ export def "seed recover" [bits: int]: string -> string {
     error make {msg: $"invalid bits length: ($bits)"}
   }
   let mnemonic = $in
-  let seqBytes = $bits // 8
   let words = "dictionary.txt" | open | lines | enumerate
     | each { {$in.item: $in.index} } | into record
   let wrdIdx = $mnemonic | split words | each {|w| $words | get $w } | reverse
-  let seq = $wrdIdx | reduce --fold 0x[] {|decIdx, seq|
+  let seed = $wrdIdx | reduce --fold 0x[] {|decIdx, seed|
     let hexIdx = $decIdx | into binary | take 2 | bytes reverse
-    $seq | bytes add $hexIdx | bits shl 5
-  } | take $seqBytes | encode hex --lower
-  $seq
+    $seed | bytes add $hexIdx | bits shl 5
+  } | take ($bits // 8) | encode hex --lower
+  $seed
 }
 
 # "0c1e24e5917779d297e14d45f14e1a1a" | seed generate 128 |
