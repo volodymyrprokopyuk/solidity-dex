@@ -16,12 +16,12 @@ func formatKey(key *ecdsa.PrivateKey) string {
 func walletCmd() *cobra.Command {
   cmd := &cobra.Command{
     Use: "wallet",
-    Short: "Hash, TODO",
+    Short: "sha256, keccak256, hmac-sha512",
     Version: "0.1.0",
     SilenceUsage: true,
     SilenceErrors: true,
   }
-  cmd.AddCommand(sha256Cmd(), keccak256Cmd())
+  cmd.AddCommand(sha256Cmd(), keccak256Cmd(), hmacSHA512Cmd())
   return cmd
 }
 
