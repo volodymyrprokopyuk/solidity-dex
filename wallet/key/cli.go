@@ -72,10 +72,7 @@ func keyAddressCmd() *cobra.Command {
       if err != nil {
         return err
       }
-      addr, err := keyAddress(pub)
-      if err != nil {
-        return err
-      }
+      addr := keyAddress(pub)
       fmt.Printf("%x\n", addr)
       return nil
     },
@@ -141,3 +138,45 @@ func keyAddressCmd() *cobra.Command {
 //   _ = cmd.MarkFlagRequired("pub")
 //   return cmd
 // }
+
+func AddressCmd() *cobra.Command {
+  cmd := &cobra.Command{
+    Use: "address",
+    Short: "Encode and verify an Ethereum address (ERC-55)",
+  }
+  cmd.AddCommand(addrEncodeCmd(), addrVerifyCmd())
+  return cmd
+}
+
+func addrEncodeCmd() *cobra.Command {
+  cmd := &cobra.Command{
+    Use: "encode",
+    Short: `Encode an Ethereum address (ERC-55)
+  stdin: an address in hex
+  stdout: the encoded address in hex`,
+    RunE: func(cmd *cobra.Command, args []string) error {
+      var addr string
+      _, err := fmt.Scanf("%s", &addr)
+      if err != nil {
+        return err
+      }
+      encAddr := addressEncode(addr)
+      fmt.Printf("%s\n", encAddr)
+      return nil
+    },
+  }
+  return cmd
+}
+
+func addrVerifyCmd() *cobra.Command {
+  cmd := &cobra.Command{
+    Use: "verify",
+    Short: `Verify an encoded Ethereum address (ERC-55)
+  stdin: an encoded address in hex
+  stdout: true if valid address, false otherwise`,
+    RunE: func(cmd *cobra.Command, args []string) error {
+      return nil
+    },
+  }
+  return cmd
+}

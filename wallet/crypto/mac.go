@@ -5,12 +5,9 @@ import (
 	"crypto/sha512"
 )
 
-func HMACSHA512(data, key []byte) ([]byte, error) {
+func HMACSHA512(data, key []byte) []byte {
   state := hmac.New(sha512.New, key)
-  _, err := state.Write(data)
-  if err != nil {
-    return nil, err
-  }
+  _, _ = state.Write(data)
   mac := state.Sum(nil)
-  return mac, nil
+  return mac
 }

@@ -44,9 +44,21 @@ def "test key address" [] {
   }
 }
 
+def "test address encode" [] {
+  let cases = [[exp];
+    ["9cea81B9D2E900d6027125378ee2ddfA15FeEED1"],
+    ["75D28c27aC5C5de118508fee2d14ef5FB04c5435"]
+  ]
+  $cases | each {|c|
+    let encAddr = $c.exp | str downcase | wallet address encode
+    assert equal $encAddr $c.exp
+  }
+}
+
 test key generate
 test key derive
 test key address
 
-print success
+test address encode
 
+print success

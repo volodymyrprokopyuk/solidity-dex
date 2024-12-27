@@ -73,6 +73,7 @@ def "key public" [--pub-in]: path -> string {
 # "key.pem" | key public | print
 # "pub.pem" | key public --pub-in | print
 
+# DONE
 def "key address" []: string -> string {
   let pub = $in
   let addr = $pub | hash keccak256 | str substring 24..63
@@ -82,6 +83,7 @@ def "key address" []: string -> string {
 # "pub.pem" | key public --pub-in | key address | print
 # "key.pem" | key private | secp256k1 derive | from yaml | print
 
+# DONE
 export def "address checksum" []: string -> string {
   let strAddr = $in
   let chAddr = $strAddr | split chars

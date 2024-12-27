@@ -20,13 +20,10 @@ func keyDerive(prv []byte) *ecdsa.PrivateKey {
   return key
 }
 
-func keyAddress(pub []byte) ([]byte, error) {
-  hash, err := crypto.Keccak256(pub)
-  if err != nil {
-    return nil, err
-  }
+func keyAddress(pub []byte) []byte {
+  hash := crypto.Keccak256(pub)
   addr := hash[12:]
-  return addr, nil
+  return addr
 }
 
 // func sign(key string, hash []byte) ([]byte, error) {

@@ -23,14 +23,8 @@ func sha256Cmd() *cobra.Command {
   stdout: the sha256 digest in hex of the data`,
     RunE: func(cmd *cobra.Command, args []string) error {
       var data []byte
-      _, err := fmt.Scanf("%v", &data)
-      if err != nil {
-        return err
-      }
-      hash, err := SHA256(data)
-      if err != nil {
-        return err
-      }
+      _, _ = fmt.Scanf("%v", &data)
+      hash := SHA256(data)
       fmt.Printf("%x\n", hash)
       return nil
     },
@@ -46,14 +40,8 @@ func keccak256Cmd() *cobra.Command {
   sotout: the keccak256 digest in hex of the data`,
     RunE: func(cmd *cobra.Command, args []string) error {
       var data []byte
-      _, err := fmt.Scanf("%v", &data)
-      if err != nil {
-        return err
-      }
-      hash, err := Keccak256(data)
-      if err != nil {
-        return err
-      }
+      _, _ = fmt.Scanf("%v", &data)
+      hash := Keccak256(data)
       fmt.Printf("%x\n", hash)
       return nil
     },
@@ -78,15 +66,9 @@ func hmacSHA512Cmd() *cobra.Command {
   stdout: the hmac-sha512 digest in hex of the data authenticated with the key`,
     RunE: func(cmd *cobra.Command, args []string) error {
       var data []byte
-      _, err := fmt.Scanf("%v", &data)
-      if err != nil {
-        return err
-      }
+      _, _ = fmt.Scanf("%v", &data)
       key, _ := cmd.Flags().GetString("key")
-      mac, err := HMACSHA512(data, []byte(key))
-      if err != nil {
-        return err
-      }
+      mac := HMACSHA512(data, []byte(key))
       fmt.Printf("%x\n", mac)
       return nil
     },

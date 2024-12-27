@@ -14,6 +14,9 @@ func walletCmd() *cobra.Command {
     SilenceUsage: true,
     SilenceErrors: true,
   }
-  cmd.AddCommand(crypto.HashCmd(), crypto.MACCmd(), key.KeyCmd())
+  cmd.AddCommand(
+    crypto.HashCmd(), crypto.MACCmd(),
+    key.KeyCmd(), key.AddressCmd(),
+  )
   return cmd
 }

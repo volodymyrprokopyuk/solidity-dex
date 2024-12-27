@@ -6,22 +6,16 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-func SHA256(data []byte) ([]byte, error) {
+func SHA256(data []byte) []byte {
   state := sha256.New()
-  _, err := state.Write(data)
-  if err != nil {
-    return nil, err
-  }
+  _, _ = state.Write(data)
   hash := state.Sum(nil)
-  return hash, nil
+  return hash
 }
 
-func Keccak256(data []byte) ([]byte, error) {
+func Keccak256(data []byte) []byte {
   state := sha3.NewLegacyKeccak256()
-  _, err := state.Write(data)
-  if err != nil {
-    return nil, err
-  }
+  _, _ = state.Write(data)
   hash := state.Sum(nil)
-  return hash, nil
+  return hash
 }
