@@ -5,7 +5,7 @@ import (
 	"crypto/sha512"
 )
 
-func macHMACSHA512(data, key []byte) ([]byte, error) {
+func HMACSHA512(data, key []byte) ([]byte, error) {
   state := hmac.New(sha512.New, key)
   _, err := state.Write(data)
   if err != nil {
