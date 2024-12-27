@@ -18,11 +18,11 @@ func KeyCmd() *cobra.Command {
     Use: "key",
     Short: "Generate secp256k1 keys, sign messages, verify signatures",
   }
-  cmd.AddCommand(generateCmd(), deriveCmd(), signCmd(), verifyCmd());
+  cmd.AddCommand(keyGenerateCmd(), keyDeriveCmd(), signCmd(), verifyCmd());
   return cmd
 }
 
-func generateCmd() *cobra.Command {
+func keyGenerateCmd() *cobra.Command {
   cmd := &cobra.Command{
     Use: "generate",
     Short: `Generate a secp256k1 key pair
@@ -39,7 +39,7 @@ func generateCmd() *cobra.Command {
   return cmd
 }
 
-func deriveCmd() *cobra.Command {
+func keyDeriveCmd() *cobra.Command {
   cmd := &cobra.Command{
     Use: "derive",
     Short: `Derive a secp256k1 public key from an external private key

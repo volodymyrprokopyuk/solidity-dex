@@ -13,18 +13,18 @@ func keyGenerate() (*ecdsa.PrivateKey, error)  {
   return ecdsa.GenerateKey(ecc.P256k1(), rand.Reader)
 }
 
-func keyDerive(key string) (*ecdsa.PrivateKey, error) {
-  d, succ := new(big.Int).SetString(key, 16)
+func keyDerive(prv string) (*ecdsa.PrivateKey, error) {
+  d, succ := new(big.Int).SetString(prv, 16)
   if !succ {
-    return nil, fmt.Errorf("invalid key: %s", key)
+    return nil, fmt.Errorf("invalid key: %s", prv)
   }
-  prv := &ecdsa.PrivateKey{D: d}
-  prv.PublicKey.Curve = ecc.P256k1()
-  prv.PublicKey.X, prv.PublicKey.Y = prv.PublicKey.ScalarBaseMult(prv.D.Bytes())
-  return prv, nil
+  key := &ecdsa.PrivateKey{D: d}
+  key.PublicKey.Curve = ecc.P256k1()
+  key.PublicKey.X, key.PublicKey.Y = key.PublicKey.ScalarBaseMult(key.D.Bytes())
+  return key, nil
 }
 
-// func keyAddress()
+// func keyAddress(pub string)
 
 func sign(key string, hash []byte) ([]byte, error) {
   prv, err := keyDerive(key)
