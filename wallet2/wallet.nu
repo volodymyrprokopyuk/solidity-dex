@@ -2,6 +2,7 @@
 
 $env.PATH = $env.PATH | prepend ("../secp256k1" | path expand)
 
+# DONE
 export def "hash sha256" []: [binary -> string, string -> string] {
   let msg = $in
   let hash = $msg | openssl dgst -sha256 -binary | encode hex --lower
@@ -11,6 +12,7 @@ export def "hash sha256" []: [binary -> string, string -> string] {
 # "message" | hash sha256 | print
 # 0x[1a2b] | hash sha256 | print
 
+# DONE
 export def "hash keccak256" []: [binary -> string, string -> string] {
   let msg = $in
   let hash = $msg | openssl dgst -keccak-256 -binary | encode hex --lower
@@ -20,6 +22,7 @@ export def "hash keccak256" []: [binary -> string, string -> string] {
 # "message" | hash keccak256 | print
 # 0x[1a2b] | hash keccak256 | print
 
+# DONE
 export def "hash hmac-sha512" [key: string]: [binary -> string, string -> string] {
   let msg = $in
   let hash = $msg | openssl dgst -sha512 -hmac $key -binary | encode hex --lower
@@ -29,14 +32,7 @@ export def "hash hmac-sha512" [key: string]: [binary -> string, string -> string
 # "message" | hash hmac-sha512 "key" | print
 # 0x[1a2b] | hash hmac-sha512 "key" | print
 
-# export def "encode base58check" []: string -> string {
-#   let alpha = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-#     | split chars
-# }
-
-let key = "45fe397c062513442044ab8f303b92c7a54184f2dd935b7eb5dc20b72fd68b39"
-$key | secp256k1 derive | from yaml | print
-
+# DONE
 def "key generate" [keyPath: path, pubPath: path] {
   let key = openssl ecparam -genkey -name secp256k1 -noout
   $key | save --force $keyPath
@@ -45,6 +41,7 @@ def "key generate" [keyPath: path, pubPath: path] {
 
 # key generate key.pem pub.pem
 
+# DONE
 def parse-key [keyName: string]: string -> string {
   let strKey = $in
   let hexKey = $strKey | lines | skip until { $in =~ $keyName } | skip 1
@@ -53,6 +50,7 @@ def parse-key [keyName: string]: string -> string {
   $hexKey
 }
 
+# DONE
 def "key private" []: path -> string {
   let keyFile = $in
   let hexKey = $keyFile | open | openssl ec -text -noout | parse-key "priv:"
@@ -61,6 +59,7 @@ def "key private" []: path -> string {
 
 # "key.pem" | key private | print
 
+# DONE
 def "key public" [--pub-in]: path -> string {
   let keyFile = $in
   let hexPub = $keyFile | open | if $pub_in {
