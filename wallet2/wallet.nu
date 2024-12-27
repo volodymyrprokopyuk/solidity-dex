@@ -98,6 +98,7 @@ export def "address checksum" []: string -> string {
 
 # "pub.pem" | key public --pub-in | key address | address checksum | print
 
+# DONE
 export def "address verify" []: string -> bool {
   let addrSum = $in
   let chAddr = $addrSum | split chars

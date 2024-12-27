@@ -175,6 +175,13 @@ func addrVerifyCmd() *cobra.Command {
   stdin: an encoded address in hex
   stdout: true if valid address, false otherwise`,
     RunE: func(cmd *cobra.Command, args []string) error {
+      var addr string
+      _, err := fmt.Scanf("%s", &addr)
+      if err != nil {
+        return err
+      }
+      valid := addressVerify(addr)
+      fmt.Printf("%t\n", valid)
       return nil
     },
   }

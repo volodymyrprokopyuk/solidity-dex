@@ -50,8 +50,21 @@ def "test address encode" [] {
     ["75D28c27aC5C5de118508fee2d14ef5FB04c5435"]
   ]
   $cases | each {|c|
-    let encAddr = $c.exp | str downcase | wallet address encode
-    assert equal $encAddr $c.exp
+    let addr = $c.exp | str downcase | wallet address encode
+    assert equal $addr $c.exp
+  }
+}
+
+def "test address verify" [] {
+  let cases = [[addr, exp];
+    ["9cea81B9D2E900d6027125378ee2ddfA15FeEED1", true],
+    ["9cea81B9D2E900d6027125378ee2ddfA15FeEEd1", false],
+    ["75D28c27aC5C5de118508fee2d14ef5FB04c5435", true],
+    ["75D28c27aC5C5de118508fee2d14ef5FB04C5435", false]
+  ]
+  $cases | each {|c|
+    let valid = $c.addr | wallet address verify | into bool
+    assert equal $valid $c.exp
   }
 }
 
@@ -60,5 +73,6 @@ test key derive
 test key address
 
 test address encode
+test address verify
 
 print success

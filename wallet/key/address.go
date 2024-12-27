@@ -2,6 +2,7 @@ package key
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -9,7 +10,8 @@ import (
 )
 
 func addressEncode(addr string) string {
-  hash := crypto.Keccak256([]byte(strings.ToLower(addr)))
+  addr = strings.ToLower(addr)
+  hash := crypto.Keccak256([]byte(addr))
   hexAddr := strings.Split(addr, "")
   hexHash := strings.Split(fmt.Sprintf("%x", hash), "")
   var encAddr strings.Builder
@@ -22,4 +24,22 @@ func addressEncode(addr string) string {
     _, _ = encAddr.WriteString(a)
   }
   return encAddr.String()
+}
+
+func addressVerify(addr string) bool {
+  hash := crypto.Keccak256([]byte(strings.ToLower(addr)))
+  hexAddr := strings.Split(addr, "")
+  hexHash := strings.Split(fmt.Sprintf("%x", hash), "")
+  reUpper := regexp.MustCompile(`[A-F0-9]`)
+  reLower := regexp.MustCompile(`[a-f0-9]`)
+  valid := true
+  for i := range addr {
+    h, _ := strconv.ParseInt(hexHash[i], 16, 8)
+    a := hexAddr[i]
+    if h >= 8 && !reUpper.MatchString(a) || h < 8 && !reLower.MatchString(a) {
+      valid = false
+      break
+    }
+  }
+  return valid
 }
