@@ -73,7 +73,7 @@ func hmacSHA512Cmd() *cobra.Command {
       return nil
     },
   }
-  cmd.Flags().String("key", "", "authentication key")
+  cmd.Flags().String("key", "", "an authentication key")
   _ = cmd.MarkFlagRequired("key")
   return cmd
 }

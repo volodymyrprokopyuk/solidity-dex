@@ -187,3 +187,42 @@ func addrVerifyCmd() *cobra.Command {
   }
   return cmd
 }
+
+func SeedCmd() *cobra.Command {
+  cmd := &cobra.Command{
+    Use: "seed",
+    Short: "Generate, recover, derive seed",
+  }
+  cmd.AddCommand(seedGenerateCmd()/*, seedRecoverCmd(), seedDeriveCmd()*/)
+  return cmd
+}
+
+func seedGenerateCmd() *cobra.Command {
+  cmd := &cobra.Command{
+    Use: "generate",
+    Short: `Generate a random seed and encode it into a mnemonic (BIP-39)
+  stdin: a randomly generated seed in hex if --stdin
+  stdout: a generated or received seed encoded into a mnemonic`,
+    RunE: func(cmd *cobra.Command, args []string) error {
+      bits, _ := cmd.Flags().GetInt("bits")
+      stdin, _ := cmd.Flags().GetBool("stdin")
+      var seed []byte
+      if stdin {
+        _, err := fmt.Scanf("%x", &seed)
+        if err != nil {
+          return err
+        }
+      }
+      mnemonic, err := seedGenerage(bits, seed)
+      if err != nil {
+        return err
+      }
+      fmt.Printf("%s\n", mnemonic)
+      return nil
+    },
+  }
+  cmd.Flags().Int("bits", 0, "a seed length in bits")
+  _ = cmd.MarkFlagRequired("bits")
+  cmd.Flags().Bool("stdin", false, "receive a random seed from the stdin")
+  return cmd
+}
