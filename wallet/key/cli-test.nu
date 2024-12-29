@@ -68,14 +68,17 @@ def "test address verify" [] {
   }
 }
 
+let seeds = [[seed, bits, mnemonic];
+  ["0c1e24e5917779d297e14d45f14e1a1a", 128,
+   "army van defense carry jealous true garbage claim echo media make crunch"],
+  ["2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c", 256,
+   "cake apple borrow silk endorse fitness top denial coil riot stay wolf luggage oxygen faint major edit measure invite love trap field dilemma oblige"]
+]
+
 def "test seed generate" [] {
   let cases = [[seed, bits, exp];
-    ["0c1e24e5917779d297e14d45f14e1a1a", 128,
-     "army van defense carry jealous true garbage claim echo media make crunch"],
-    ["2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c", 256,
-     ("cake apple borrow silk endorse fitness top denial coil riot stay wolf" +
-      " luggage oxygen faint major edit measure invite love trap field" +
-      " dilemma oblige")]
+    [$seeds.0.seed, $seeds.0.bits, $seeds.0.mnemonic],
+    [$seeds.1.seed, $seeds.1.bits, $seeds.1.mnemonic]
   ]
   $cases | each {|c|
     let mnemonic = $c.seed | wallet seed generate --bits $c.bits --stdin
@@ -85,15 +88,28 @@ def "test seed generate" [] {
 
 def "test seed recover" [] {
   let cases = [[mnemonic, exp];
-    ["army van defense carry jealous true garbage claim echo media make crunch",
-     "0c1e24e5917779d297e14d45f14e1a1a"],
-    [("cake apple borrow silk endorse fitness top denial coil riot stay wolf" +
-      " luggage oxygen faint major edit measure invite love trap field" +
-      " dilemma oblige"),
-     "2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c"]
+    [$seeds.0.mnemonic, $seeds.0.seed]
+    [$seeds.1.mnemonic, $seeds.1.seed]
   ]
   $cases | each {|c|
     let seed = $c.mnemonic | wallet seed recover
+    assert equal $seed $c.exp
+  }
+}
+
+def "test seed derive" [] {
+  let cases = [[mnemonic, passphrase, exp];
+    [$seeds.0.mnemonic, "",
+     "5b56c417303faa3fcba7e57400e120a0ca83ec5a4fc9ffba757fbe63fbd77a89a1a3be4c67196f57c39a88b76373733891bfaba16ed27a813ceed498804c0570"],
+    [$seeds.0.mnemonic, "passphrase",
+     "a72c0c6976113d8fff342a96041d68e1a8f79a465ae8aa980aba349339965cb8e068a3945a90e7ee9cda6a5d9b3a1df317afb0a73a9c50c7fbe0a514a6fa651d"],
+    [$seeds.1.mnemonic, "",
+     "3269bce2674acbd188d4f120072b13b088a0ecf87c6e4cae41657a0bb78f5315b33b3a04356e53d062e55f1e0deaa082df8d487381379df848a6ad7e98798404"]
+    [$seeds.1.mnemonic, "passphrase",
+     "575385ded4e59bcb0dff46d376faf9d6839eecfde301a3e0f5065d417162a011d3fdb8f1371ea33db10222e5c0d34afd5e0050ff230302411d7f250f71f642b3"]
+  ]
+  $cases | each {|c|
+    let seed = $c.mnemonic | wallet seed derive --passphrase $c.passphrase
     assert equal $seed $c.exp
   }
 }
@@ -107,5 +123,6 @@ test address verify
 
 test seed generate
 test seed recover
+test seed derive
 
 print success

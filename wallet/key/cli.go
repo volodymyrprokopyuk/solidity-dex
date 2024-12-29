@@ -195,7 +195,7 @@ func SeedCmd() *cobra.Command {
     Use: "seed",
     Short: "Generate, recover, derive seed",
   }
-  cmd.AddCommand(seedGenerateCmd(), seedRecoverCmd()/*, seedDeriveCmd()*/)
+  cmd.AddCommand(seedGenerateCmd(), seedRecoverCmd(), seedDeriveCmd())
   return cmd
 }
 
@@ -249,5 +249,27 @@ func seedRecoverCmd() *cobra.Command {
       return nil
     },
   }
+  return cmd
+}
+
+func seedDeriveCmd() *cobra.Command {
+  cmd := &cobra.Command{
+    Use: "derive",
+    Short: `Derive a seed from a mnemonic string
+  stdin: a mnemonic string
+  stdout: a seed in hex`,
+    RunE: func(cmd *cobra.Command, args []string) error {
+      passphrase, _ := cmd.Flags().GetString("passphrase")
+      var mnemonic []byte
+      mnemonic, err := io.ReadAll(os.Stdin)
+      if err != nil {
+        return err
+      }
+      seed := seedDerive(string(mnemonic), passphrase)
+      fmt.Printf("%x\n", seed)
+      return nil
+    },
+  }
+  cmd.Flags().String("passphrase", "", "a passphrase")
   return cmd
 }

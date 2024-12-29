@@ -100,7 +100,7 @@ func pbkdf2SHA512Cmd() *cobra.Command {
     Use: "pbkdf2-sha512",
     Short: `Produce a pbkdf2-sha512 key
   stdin: a password
-  stdout: a pbkdf-sha512 key`,
+  stdout: a pbkdf-sha512 key in hex`,
     RunE: func(cmd *cobra.Command, args []string) error {
       salt, _ := cmd.Flags().GetString("salt")
       iter, _ := cmd.Flags().GetInt("iter")

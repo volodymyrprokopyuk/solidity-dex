@@ -103,3 +103,9 @@ func seedRecover(mnemonic string) ([]byte, error) {
   seedLen := 4 * wordLen / 3
   return seed[:seedLen], nil
 }
+
+func seedDerive(mnemonic, passphrase string) []byte {
+  salt := []byte("mnemonic" + passphrase)
+  seed := crypto.PBKDF2SHA512([]byte(mnemonic), salt, 2048, 64)
+  return seed
+}

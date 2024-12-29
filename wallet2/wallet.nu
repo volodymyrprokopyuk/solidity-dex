@@ -159,6 +159,7 @@ export def "seed recover" [bits: int]: string -> string {
 # "2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c"
 #   | seed generate 256 | seed recover 256 | print
 
+# DONE
 export def "seed derive" [--passphrase: string = ""]: string -> string {
   let mnemonic = $in
   let pass = $mnemonic | encode hex --lower
