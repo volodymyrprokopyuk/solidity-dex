@@ -114,8 +114,9 @@ export def "address verify" []: string -> bool {
 # "pub.pem" | key public --pub-in | key address | address checksum
 #   | address verify | print
 
+# DONE
 export def "seed generate" [bits: int]: string -> string {
-  if ($bits not-in [32, 128, 160, 192, 224, 256]) {
+  if ($bits not-in [128, 160, 192, 224, 256]) {
     error make {msg: $"invalid bits length: ($bits)"}
   }
   let rseq = $in
@@ -125,7 +126,7 @@ export def "seed generate" [bits: int]: string -> string {
   $seedSum | print
   let wrdLen = ($bits + ($bits // 32)) // 11
   let wrdIdx = 0..<$wrdLen | each {|i|
-    $seedSum | bits shl ($i * 11) | take 2 | tee { print } | bits shr 5
+    $seedSum | bits shl ($i * 11) | take 2 | bits shr 5
       | bytes reverse | into int
   }
   let words = "dictionary.txt" | open | lines
@@ -133,12 +134,11 @@ export def "seed generate" [bits: int]: string -> string {
   $mnemonic
 }
 
-"0c1e24e5" | seed generate 32 | print
-
 # "0c1e24e5917779d297e14d45f14e1a1a" | seed generate 128 | print
 # "2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c"
 #   | seed generate 256 | print
 
+# DONE
 export def "seed recover" [bits: int]: string -> string {
   if ($bits not-in [128, 160, 192, 224, 256]) {
     error make {msg: $"invalid bits length: ($bits)"}

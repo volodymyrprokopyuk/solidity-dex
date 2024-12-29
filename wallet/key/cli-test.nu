@@ -68,11 +68,44 @@ def "test address verify" [] {
   }
 }
 
+def "test seed generate" [] {
+  let cases = [[seed, bits, exp];
+    ["0c1e24e5917779d297e14d45f14e1a1a", 128,
+     "army van defense carry jealous true garbage claim echo media make crunch"],
+    ["2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c", 256,
+     ("cake apple borrow silk endorse fitness top denial coil riot stay wolf" +
+      " luggage oxygen faint major edit measure invite love trap field" +
+      " dilemma oblige")]
+  ]
+  $cases | each {|c|
+    let mnemonic = $c.seed | wallet seed generate --bits $c.bits --stdin
+    assert equal $mnemonic $c.exp
+  }
+}
+
+def "test seed recover" [] {
+  let cases = [[mnemonic, exp];
+    ["army van defense carry jealous true garbage claim echo media make crunch",
+     "0c1e24e5917779d297e14d45f14e1a1a"],
+    [("cake apple borrow silk endorse fitness top denial coil riot stay wolf" +
+      " luggage oxygen faint major edit measure invite love trap field" +
+      " dilemma oblige"),
+     "2041546864449caff939d32d574753fe684d3c947c3346713dd8423e74abcf8c"]
+  ]
+  $cases | each {|c|
+    let seed = $c.mnemonic | wallet seed recover
+    assert equal $seed $c.exp
+  }
+}
+
 test key generate
 test key derive
 test key address
 
 test address encode
 test address verify
+
+test seed generate
+test seed recover
 
 print success

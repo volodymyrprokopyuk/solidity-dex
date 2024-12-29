@@ -2,6 +2,8 @@ package crypto
 
 import (
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -22,8 +24,10 @@ func sha256Cmd() *cobra.Command {
   stdin: binary or hex data to hash
   stdout: the sha256 digest in hex of the data`,
     RunE: func(cmd *cobra.Command, args []string) error {
-      var data []byte
-      _, _ = fmt.Scanf("%v", &data)
+      data, err := io.ReadAll(os.Stdin)
+      if err != nil {
+        return err
+      }
       hash := SHA256(data)
       fmt.Printf("%x\n", hash)
       return nil
@@ -39,8 +43,10 @@ func keccak256Cmd() *cobra.Command {
   stdin: binary or hex data to hash
   sotout: the keccak256 digest in hex of the data`,
     RunE: func(cmd *cobra.Command, args []string) error {
-      var data []byte
-      _, _ = fmt.Scanf("%v", &data)
+      data, err := io.ReadAll(os.Stdin)
+      if err != nil {
+        return err
+      }
       hash := Keccak256(data)
       fmt.Printf("%x\n", hash)
       return nil
@@ -65,9 +71,11 @@ func hmacSHA512Cmd() *cobra.Command {
   stdin: binary or hex data to authenticate
   stdout: the hmac-sha512 digest in hex of the data authenticated with the key`,
     RunE: func(cmd *cobra.Command, args []string) error {
-      var data []byte
-      _, _ = fmt.Scanf("%v", &data)
       key, _ := cmd.Flags().GetString("key")
+      data, err := io.ReadAll(os.Stdin)
+      if err != nil {
+        return err
+      }
       mac := HMACSHA512(data, []byte(key))
       fmt.Printf("%x\n", mac)
       return nil

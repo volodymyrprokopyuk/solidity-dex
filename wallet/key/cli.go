@@ -3,6 +3,8 @@ package key
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -193,7 +195,7 @@ func SeedCmd() *cobra.Command {
     Use: "seed",
     Short: "Generate, recover, derive seed",
   }
-  cmd.AddCommand(seedGenerateCmd()/*, seedRecoverCmd(), seedDeriveCmd()*/)
+  cmd.AddCommand(seedGenerateCmd(), seedRecoverCmd()/*, seedDeriveCmd()*/)
   return cmd
 }
 
@@ -201,8 +203,8 @@ func seedGenerateCmd() *cobra.Command {
   cmd := &cobra.Command{
     Use: "generate",
     Short: `Generate a random seed and encode it into a mnemonic (BIP-39)
-  stdin: a randomly generated seed in hex if --stdin
-  stdout: a generated or received seed encoded into a mnemonic`,
+  stdin: a optional randomly generated seed in hex if --stdin
+  stdout: a generated or received seed encoded into a mnemonic string`,
     RunE: func(cmd *cobra.Command, args []string) error {
       bits, _ := cmd.Flags().GetInt("bits")
       stdin, _ := cmd.Flags().GetBool("stdin")
@@ -224,5 +226,28 @@ func seedGenerateCmd() *cobra.Command {
   cmd.Flags().Int("bits", 0, "a seed length in bits")
   _ = cmd.MarkFlagRequired("bits")
   cmd.Flags().Bool("stdin", false, "receive a random seed from the stdin")
+  return cmd
+}
+
+func seedRecoverCmd() *cobra.Command {
+  cmd := &cobra.Command{
+    Use: "recover",
+    Short: `Recover a seed from a mnemonic string
+  stdin: a mnemonic string
+  stdout: a seed in hex`,
+    RunE: func(cmd *cobra.Command, args []string) error {
+      var mnemonic []byte
+      mnemonic, err := io.ReadAll(os.Stdin)
+      if err != nil {
+        return err
+      }
+      seed, err := seedRecover(string(mnemonic))
+      if err != nil {
+        return err
+      }
+      fmt.Printf("%x\n", seed)
+      return nil
+    },
+  }
   return cmd
 }
