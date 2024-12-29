@@ -46,8 +46,27 @@ def "test mac hmac-sha512" [] {
   }
 }
 
+def "test kdf pbkdf2-sha512" [] {
+  let cases = [[pass, salt, iter, keyLen, exp];
+    ["pass", "salt", 2048, 64,
+     "6c6443ef774e4aed18d455e1f3e0cdd1342aa67cf26c19270a208d9599740495784c406ac54f1b4fc8139692830c3f96ad2eaf331fb4ab4eaa0aff27501e09a4"]
+  ]
+  $cases | each {|c|
+    let key = $c.pass | (wallet kdf pbkdf2-sha512 --salt $c.salt
+      --iter $c.iter --keylen $c.keyLen)
+    assert equal $key $c.exp
+    let pass = $c.pass | encode hex --lower
+    let salt = $c.salt | encode hex --lower
+    let exp = (openssl kdf -kdfopt digest:sha512 -kdfopt iter:($c.iter)
+      -kdfopt hexpass:($pass) -kdfopt hexsalt:($salt)
+      -keylen $c.keyLen -binary pbkdf2) | encode hex --lower
+    assert equal $key $exp
+  }
+}
+
 test hash sha256
 test hash keccak256
 test mac hmac-sha512
+test kdf pbkdf2-sha512
 
 print success
