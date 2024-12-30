@@ -3,6 +3,7 @@ package crypto
 import (
 	"fmt"
 	"io"
+	"math/big"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -120,5 +121,58 @@ func pbkdf2SHA512Cmd() *cobra.Command {
   _ = cmd.MarkFlagRequired("iter")
   cmd.Flags().Int("keylen", 0, "a length of the key")
   _ = cmd.MarkFlagRequired("keylen")
+  return cmd
+}
+
+func Base58CheckCmd() *cobra.Command {
+  cmd := &cobra.Command{
+    Use: "base58check",
+    Short: "Encode and decode base58check",
+  }
+  cmd.AddCommand(base58CheckEncCmd(), base58CheckDecCmd())
+  return cmd
+}
+
+func base58CheckEncCmd() *cobra.Command {
+  cmd := &cobra.Command{
+    Use: "encode",
+    Short: `Encode base58check
+  stdin: a large number in hex
+  stdout: base58check encoded string`,
+    RunE: func(cmd *cobra.Command, args []string) error {
+      var hexNum []byte
+      _, err := fmt.Scanf("%x", &hexNum)
+      if err != nil {
+        return err
+      }
+      num := new(big.Int).SetBytes(hexNum)
+      str := Base58CheckEnc(num)
+      fmt.Printf("%s\n", str)
+      return nil
+    },
+  }
+  return cmd
+}
+
+func base58CheckDecCmd() *cobra.Command {
+  cmd := &cobra.Command{
+    Use: "decode",
+    Short: `Decode base58check
+  stdin: base58check encoded string
+  stdout: a large number in hex`,
+    RunE: func(cmd *cobra.Command, args []string) error {
+      var str []byte
+      _, err := fmt.Scanf("%s", &str)
+      if err != nil {
+        return err
+      }
+      num, err := Base58CheckDec(string(str))
+      if err != nil {
+        return err
+      }
+      fmt.Printf("%x\n", num)
+      return nil
+    },
+  }
   return cmd
 }

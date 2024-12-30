@@ -64,9 +64,25 @@ def "test kdf pbkdf2-sha512" [] {
   }
 }
 
+def "test base58check encode decode" [] {
+  let cases = [[num, str];
+    ["a5d573ecb2d798d4de357e599271f13169ce0c68d4",
+     "29jEAGMrL2xNdPrYF69tTdDJxa1PnkUtoK6"
+    ]
+  ]
+  $cases | each {|c|
+    let str = $c.num | wallet base58check encode
+    assert equal $str $c.str
+    let num = $c.str | wallet base58check decode
+    assert equal $num $c.num
+    assert error { $c.str + "x" | wallet base58check decode }
+  }
+}
+
 test hash sha256
 test hash keccak256
 test mac hmac-sha512
 test kdf pbkdf2-sha512
+test base58check encode decode
 
 print success

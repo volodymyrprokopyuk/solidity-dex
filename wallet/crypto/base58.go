@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"strings"
@@ -24,7 +25,7 @@ func strReverse(str string) string {
   return rev.String()
 }
 
-func Base58enc(num *big.Int) string {
+func Base58Enc(num *big.Int) string {
   zero, base58 := big.NewInt(0), big.NewInt(58)
   if num.Cmp(zero) == 0 {
     return "1"
@@ -39,7 +40,7 @@ func Base58enc(num *big.Int) string {
   return str
 }
 
-func Base58dec(str string) (*big.Int, error) {
+func Base58Dec(str string) (*big.Int, error) {
   if len(str) == 0 {
     return nil, fmt.Errorf("empty base58 encoded string")
   }
@@ -52,5 +53,30 @@ func Base58dec(str string) (*big.Int, error) {
     num.Mul(num, base58)
     num.Add(num, big.NewInt(digit))
   }
+  return num, nil
+}
+
+func Base58CheckEnc(num *big.Int) string {
+  data := num.Bytes()
+  checksum := SHA256(SHA256(data))[:4]
+  data = append(data, checksum...)
+  num = new(big.Int).SetBytes(data)
+  str := Base58Enc(num)
+  return str
+}
+
+func Base58CheckDec(str string) (*big.Int, error) {
+  num, err := Base58Dec(str)
+  if err != nil {
+    return nil, err
+  }
+  data := num.Bytes()
+  l := len(data) - 4
+  data, checksum := data[:l], data[l:]
+  hash := SHA256(SHA256(data))
+  if !bytes.Equal(hash[:4], checksum) {
+    return nil, fmt.Errorf("invalid base58check checksum")
+  }
+  num = new(big.Int).SetBytes(data)
   return num, nil
 }
