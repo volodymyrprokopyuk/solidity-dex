@@ -3,7 +3,6 @@ package crypto
 import (
 	"fmt"
 	"io"
-	"math/big"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -140,13 +139,12 @@ func base58CheckEncCmd() *cobra.Command {
   stdin: a large number in hex
   stdout: base58check encoded string`,
     RunE: func(cmd *cobra.Command, args []string) error {
-      var hexNum []byte
-      _, err := fmt.Scanf("%x", &hexNum)
+      var num []byte
+      _, err := fmt.Scanf("%x", &num)
       if err != nil {
         return err
       }
-      num := new(big.Int).SetBytes(hexNum)
-      str := Base58CheckEnc(num)
+      str := Base58CheckEncHex(num)
       fmt.Printf("%s\n", str)
       return nil
     },
@@ -166,7 +164,7 @@ func base58CheckDecCmd() *cobra.Command {
       if err != nil {
         return err
       }
-      num, err := Base58CheckDec(string(str))
+      num, err := Base58CheckDecHex(string(str))
       if err != nil {
         return err
       }

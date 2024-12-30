@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
+	"regexp"
 	"strings"
 )
 
@@ -79,4 +80,27 @@ func Base58CheckDec(str string) (*big.Int, error) {
   }
   num = new(big.Int).SetBytes(data)
   return num, nil
+}
+
+var reLeadZero = regexp.MustCompile(`0+`)
+
+func Base58CheckEncHex(hex []byte) string {
+  num := new(big.Int).SetBytes(hex)
+  str := Base58CheckEnc(num)
+  leadZero := reLeadZero.FindString(fmt.Sprintf("%x", hex))
+  str = strings.Repeat("1", len(leadZero) / 2) + str
+  return str
+}
+
+var reLeadOne = regexp.MustCompile(`^1+`)
+
+func Base58CheckDecHex(str string) ([]byte, error) {
+  num, err := Base58CheckDec(str)
+  if err != nil {
+    return nil, err
+  }
+  hex := num.Bytes()
+  leadOne := reLeadOne.FindString(str)
+  hex = append(bytes.Repeat([]byte{0x0}, len(leadOne)), hex...)
+  return hex, nil
 }
