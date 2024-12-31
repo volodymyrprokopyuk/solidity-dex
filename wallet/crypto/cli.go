@@ -159,12 +159,12 @@ func base58CheckDecCmd() *cobra.Command {
   stdin: base58check encoded string
   stdout: a large number in hex`,
     RunE: func(cmd *cobra.Command, args []string) error {
-      var str []byte
+      var str string
       _, err := fmt.Scanf("%s", &str)
       if err != nil {
         return err
       }
-      num, err := Base58CheckDecHex(string(str))
+      num, err := Base58CheckDecHex(str)
       if err != nil {
         return err
       }
