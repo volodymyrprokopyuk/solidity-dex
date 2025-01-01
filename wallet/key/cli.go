@@ -182,7 +182,12 @@ func addrVerifyCmd() *cobra.Command {
       if err != nil {
         return err
       }
-      valid := addressVerify(addr)
+      valid := true
+      err = addressVerify(addr)
+      if err != nil {
+        fmt.Fprintf(os.Stderr, "%s\n", err)
+        valid = false
+      }
       fmt.Printf("%t\n", valid)
       return nil
     },

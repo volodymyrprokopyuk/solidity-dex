@@ -118,7 +118,7 @@ func seedVerify(mnemonic string) error {
   hash &= mask
   valid := checksum == hash
   if !valid {
-    return fmt.Errorf("checksum mismatch")
+    return fmt.Errorf("seed verify: checksum mismatch")
   }
   return nil
 }

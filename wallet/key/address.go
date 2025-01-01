@@ -26,20 +26,22 @@ func addressEncode(addr string) string {
   return encAddr.String()
 }
 
-func addressVerify(addr string) bool {
+func addressVerify(addr string) error {
   hash := crypto.Keccak256([]byte(strings.ToLower(addr)))
   hexAddr := strings.Split(addr, "")
   hexHash := strings.Split(fmt.Sprintf("%x", hash), "")
   reUpper := regexp.MustCompile(`[A-F0-9]`)
   reLower := regexp.MustCompile(`[a-f0-9]`)
-  valid := true
+  // valid := true
   for i := range addr {
     h, _ := strconv.ParseInt(hexHash[i], 16, 8)
     a := hexAddr[i]
     if h >= 8 && !reUpper.MatchString(a) || h < 8 && !reLower.MatchString(a) {
-      valid = false
-      break
+      return fmt.Errorf("address verify: checksum mismatch")
+      // valid = false
+      // break
     }
   }
-  return valid
+  // return valid
+  return nil
 }
