@@ -28,6 +28,15 @@ func readDictionary(path string) ([]string, error) {
   return dict, nil
 }
 
+func setLeadBits(bits int) byte {
+  mask, m := byte(0x0), byte(0x80)
+  for range bits {
+    mask |= m
+    m >>= 1
+  }
+  return mask
+}
+
 func seedGenerage(bits int, seed []byte) (string, error) {
   if !slices.Contains([]int{128, 160, 192, 224, 256}, bits) {
     return "", fmt.Errorf("invalid bit length: %d", bits)
@@ -71,15 +80,15 @@ func seedGenerage(bits int, seed []byte) (string, error) {
   return mnemonic, nil
 }
 
-func seedRecover(mnemonic string) ([]byte, error) {
+func seedVerify(mnemonic string) error {
   words := strings.Split(mnemonic, " ")
   wordLen := len(words)
   if !slices.Contains([]int{12, 15, 18, 21, 24}, wordLen) {
-    return nil, fmt.Errorf("Invalid mnemonic length: %d", wordLen)
+    return fmt.Errorf("Invalid mnemonic length: %d", wordLen)
   }
   dict, err := readDictionary(dictPath)
   if err != nil {
-    return nil, err
+    return err
   }
   mapDict := make(map[string]uint16, len(dict))
   for i, word := range dict {
@@ -89,7 +98,7 @@ func seedRecover(mnemonic string) ([]byte, error) {
   for i, word := range words {
     idx, exist := mapDict[word]
     if !exist {
-      return nil, fmt.Errorf("invalid mnemonic word: %s", word)
+      return fmt.Errorf("invalid mnemonic word: %s", word)
     }
     wordIdx[i] = idx
   }
@@ -100,8 +109,18 @@ func seedRecover(mnemonic string) ([]byte, error) {
     seed = append(seg, seed...)
     seed = Shl(seed, 5)
   }
-  seedLen := 4 * wordLen / 3
-  return seed[:seedLen], nil
+  seedLen := 4 * wordLen / 3 // in bytes
+  checkLen := wordLen / 3 // in bits
+  seed, checksum := seed[:seedLen], seed[seedLen]
+  hash := crypto.SHA256(seed)[0]
+  mask := setLeadBits(checkLen)
+  checksum &= mask
+  hash &= mask
+  valid := checksum == hash
+  if !valid {
+    return fmt.Errorf("checksum mismatch")
+  }
+  return nil
 }
 
 func seedDerive(mnemonic, passphrase string) []byte {

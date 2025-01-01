@@ -88,12 +88,14 @@ def "test seed generate" [] {
 
 def "test seed recover" [] {
   let cases = [[mnemonic, exp];
-    [$seeds.0.mnemonic, $seeds.0.seed]
-    [$seeds.1.mnemonic, $seeds.1.seed]
+    [$seeds.0.mnemonic, true],
+    [($seeds.0.mnemonic | str replace "true" "van"), false],
+    [$seeds.1.mnemonic, true],
+    [($seeds.1.mnemonic | str replace "top" "van"), false]
   ]
   $cases | each {|c|
-    let seed = $c.mnemonic | wallet seed recover
-    assert equal $seed $c.exp
+    let valid = $c.mnemonic | wallet seed verify | into bool
+    assert equal $valid $c.exp
   }
 }
 

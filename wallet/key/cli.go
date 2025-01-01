@@ -175,7 +175,7 @@ func addrVerifyCmd() *cobra.Command {
     Use: "verify",
     Short: `Verify an encoded Ethereum address (ERC-55)
   stdin: an encoded address in hex
-  stdout: true if valid address, false otherwise`,
+  stdout: true if the address is valid, false otherwise`,
     RunE: func(cmd *cobra.Command, args []string) error {
       var addr string
       _, err := fmt.Scanf("%s", &addr)
@@ -195,7 +195,7 @@ func SeedCmd() *cobra.Command {
     Use: "seed",
     Short: "Generate, recover, derive seed",
   }
-  cmd.AddCommand(seedGenerateCmd(), seedRecoverCmd(), seedDeriveCmd())
+  cmd.AddCommand(seedGenerateCmd(), seedVerifyCmd(), seedDeriveCmd())
   return cmd
 }
 
@@ -229,23 +229,25 @@ func seedGenerateCmd() *cobra.Command {
   return cmd
 }
 
-func seedRecoverCmd() *cobra.Command {
+func seedVerifyCmd() *cobra.Command {
   cmd := &cobra.Command{
-    Use: "recover",
-    Short: `Recover a seed from a mnemonic string
+    Use: "verify",
+    Short: `Verify a mnemonic string against the checksum
   stdin: a mnemonic string
-  stdout: a seed in hex`,
+  stdout: true if the mnemonic is valid, false otherwise`,
     RunE: func(cmd *cobra.Command, args []string) error {
       var mnemonic []byte
       mnemonic, err := io.ReadAll(os.Stdin)
       if err != nil {
         return err
       }
-      seed, err := seedRecover(string(mnemonic))
+      valid := true
+      err = seedVerify(string(mnemonic))
       if err != nil {
-        return err
+        fmt.Fprintf(os.Stderr, "%s\n", err)
+        valid = false
       }
-      fmt.Printf("%x\n", seed)
+      fmt.Printf("%t\n", valid)
       return nil
     },
   }
