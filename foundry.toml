@@ -7,7 +7,7 @@ script = "."
 out = "artifact"
 # Solidity compiler
 remappings = [
-  "forge-std/=library/forge-std/src/",
+  "std/=library/forge-std/src/",
   "util/=library/util/"
 ]
 deny_warnings = true

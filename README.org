@@ -1,13 +1,14 @@
-* Contents
+* Solidity DEX
 
-** Ethereum ERC
+** Contents
 
-- [[/wallet/address-checksum.org][ERC-55 address checksum]]
-- [[/erc/FungibleToken.org][ERC-20 fungible token]]
+*** Ethereum ERC
 
-** Uniswap DEX
+- [[/erc/FungibleToken.org][ERC-20 Fungible token]]
 
-*** Uniswap v1
+*** Uniswap DEX
+
+**** Uniswap v1
 
 - [[/uniswap-v1/TokenExchange.org][Uniswap v1 token exchange]]
   - [[/uniswap-v1/PriceCalculation.html][Uniswap v1 price calculation]] download

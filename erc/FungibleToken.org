@@ -1,4 +1,4 @@
-* ERC-20 fungible token
+* ERC-20 Fungible token
 :PROPERTIES:
 :TOC: :include descendants
 :END:
@@ -20,9 +20,11 @@
 
 ** Concepts and purpose
 
-[[https://eips.ethereum.org/EIPS/eip-20][ERC-20 token standard]]
+*** ERC-20 Fungible token
 
-- ERC-20 fungible token :: The ERC-20 token standard defines an interface for
+[[https://eips.ethereum.org/EIPS/eip-20][ERC-20 Token standard]]
+
+- ERC-20 Fungible token :: The ERC-20 token standard defines an interface for
   implementing fungible tokens on Ethereum. All tokens have the same value, are
   indistinguishable and identical. Tokens can either be initially supplied or
   incrementally minted. Tokens can also be burned. The token standard allows an
@@ -121,6 +123,8 @@ function burn(address own, uint val) internal returns (bool);
   #+END_SRC
 
 ** Testing and usage
+
+*** Testing =FungibleToken= contract
 
 Test the =FungibleToken= contract
 #+BEGIN_SRC nushell

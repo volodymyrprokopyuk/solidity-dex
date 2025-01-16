@@ -1,22 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.28;
 
-import {Test} from "forge-std/Test.sol";
-import {IFungibleToken, FungibleToken} from "erc/FungibleToken.sol";
-
-contract Token is FungibleToken {
-  constructor(string memory nam, string memory sym, uint8 dec)
-    FungibleToken(nam, sym, dec) {
-  }
-
-  function mintTokens(address rcp, uint val) external returns (bool) {
-    return mint(rcp, val);
-  }
-
-  function burnTokens(address own, uint val) external returns (bool) {
-    return burn(own, val);
-  }
-}
+import {Test} from "std/Test.sol";
+import {IFungibleToken, FungibleToken, Token} from "erc/FungibleToken.sol";
 
 contract FungibleTokenTest is Test {
   address owner;
@@ -26,7 +12,7 @@ contract FungibleTokenTest is Test {
   address spn; // spender
 
   function setUp() public {
-    // Create the Token contract
+    // Create a Token contract
     owner = makeAddr("owner");
     token = new Token("Token", "TOK", 0);
     token.mintTokens(owner, supply);
@@ -37,7 +23,7 @@ contract FungibleTokenTest is Test {
   }
 
   function testTransfer() public {
-    // The owner directly transfers tokens to the recipient
+    // The owner directly transfers tokens to a recipient
     uint val = 1;
     vm.expectEmit(true, true, false, true);
     emit IFungibleToken.Transfer(owner, rcp, val);
@@ -105,7 +91,7 @@ contract FungibleTokenTest is Test {
     token.mintTokens(rcp, val);
     assertEq(token.balanceOf(rcp), val);
     assertEq(token.totalSupply(), supply + val);
-    // The owner burns existing tokens by withdrawing them from the recipient
+    // The owner burns existing tokens by withdrawing them from a recipient
     vm.expectEmit(true, true, false, true);
     emit IFungibleToken.Transfer(rcp, address(0), val);
     vm.prank(owner);

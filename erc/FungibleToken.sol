@@ -91,3 +91,17 @@ abstract contract FungibleToken is IFungibleToken, Base {
     return true;
   }
 }
+
+contract Token is FungibleToken {
+  constructor(string memory nam, string memory sym, uint8 dec)
+    FungibleToken(nam, sym, dec) {
+  }
+
+  function mintTokens(address rcp, uint val) external returns (bool) {
+    return mint(rcp, val);
+  }
+
+  function burnTokens(address own, uint val) external returns (bool) {
+    return burn(own, val);
+  }
+}
