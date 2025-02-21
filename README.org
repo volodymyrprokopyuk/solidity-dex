@@ -13,3 +13,16 @@
 - [[/uniswap-v1/TokenExchange.org][Uniswap v1 token exchange]]
   - [[/uniswap-v1/PriceCalculation.html][Uniswap v1 price calculation]] download
     the raw HTML file and open it locally to view mathematical formulae
+
+* Foundry
+
+- Install Foundry Forge std
+  #+BEGIN_SRC nushell
+mkdir contract library
+git submodule add https://github.com/foundry-rs/forge-std.git ./library/forge-std
+cd library/forge-std; git pull # update
+  #+END_SRC
+- Test contracts
+  #+BEGIN_SRC nushell
+forge test -vvv --match-contract reContract --match-test reTest
+  #+END_SRC

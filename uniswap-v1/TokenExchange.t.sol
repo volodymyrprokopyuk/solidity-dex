@@ -2,18 +2,9 @@
 pragma solidity ^0.8.28;
 
 import {Test} from "std/Test.sol";
-import {IFungibleToken, FungibleToken} from "erc/FungibleToken.sol";
+import {IFungibleToken, FungibleToken, Token} from "erc/FungibleToken.sol";
 import {ExchangeFactory} from "uniswap-v1/ExchangeFactory.sol";
 import {TokenExchange} from "uniswap-v1/TokenExchange.sol";
-
-contract Token is FungibleToken {
-  constructor(string memory nam, string memory sym, uint8 dec)
-    FungibleToken(nam, sym, dec) { }
-
-  function mintTokens(address rcp, uint val) external returns (bool) {
-    return mint(rcp, val);
-  }
-}
 
 contract TokenExchangeTest is Test {
   address owner;
