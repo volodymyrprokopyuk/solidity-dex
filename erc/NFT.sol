@@ -31,11 +31,10 @@ interface INFTRecipient {
 
 abstract contract NFT is INFT, Base {
   address minter;
-  public mapping(uint tid => address own) ownerOf;
-  public mapping(address own => uint tokNum) balanceOf;
-  public mapping(uint tid => address apr) getApproved;
-  public mapping(address own =>
-    mapping(address opr => bool allow)) isApprovedForAll;
+  mapping(uint tid => address own) public ownerOf;
+  mapping(address own => uint tokNum) public balanceOf;
+  mapping(uint tid => address apr) public getApproved;
+  mapping(address own => mapping(address opr => bool allow)) public isApprovedForAll;
 
   error ErrNFTAlreadyExists(uint tid);
   error ErrNFTNotExist(uint tid);
@@ -49,18 +48,18 @@ abstract contract NFT is INFT, Base {
   }
 
   function newNFT(uint tid) internal view {
-    require(ownerOf(tid) == address(0), ErrNFTAlreadyExists(tid))
+    require(ownerOf[tid] == address(0), ErrNFTAlreadyExists(tid));
   }
 
   function validNFT(uint tid) internal view {
-    require(ownerOf(tid) != address(0), ErrNFTNotExist(tid))
+    require(ownerOf[tid] != address(0), ErrNFTNotExist(tid));
   }
 
   function ownerOrApprovedOrOperator(uint tid) internal view {
-    address own = ownerOf(tid);
-    address apr = getApproved(tid);
+    address own = ownerOf[tid];
+    address apr = getApproved[tid];
     address opr = msg.sender;
-    bool allow = isApprovedForAll(own, opr);
+    bool allow = isApprovedForAll[own][opr];
     require(
       own == msg.sender || apr == msg.sender || allow,
       ErrUnauthorizedTransfer(msg.sender, tid)
@@ -68,9 +67,9 @@ abstract contract NFT is INFT, Base {
   }
 
   function ownerOrOperator(uint tid) internal view {
-    address own = ownerOf(tid);
+    address own = ownerOf[tid];
     address opr = msg.sender;
-    bool allow = isApprovedForAll(own, opr)
+    bool allow = isApprovedForAll[own][opr];
     require(own == msg.sender || allow, ErrUnauthorizedApprove(msg.sender, tid));
   }
 
@@ -80,16 +79,16 @@ abstract contract NFT is INFT, Base {
     newNFT(tid);
     ownerOf[tid] = rcp;
     balanceOf[rcp]++;
-    emit Transfer(address(0), rcp, tid)
+    emit Transfer(address(0), rcp, tid);
   }
 
   function burn(uint tid) internal {
     only(minter);
     validNFT(tid);
-    address own = ownerOf(tid);
+    address own = ownerOf[tid];
     delete ownerOf[tid];
     balanceOf[own]--;
-    emit Transfer(own, address(0), tid)
+    emit Transfer(own, address(0), tid);
   }
 
   function transferFrom(address own, address rcp, uint tid) public payable {
@@ -104,7 +103,7 @@ abstract contract NFT is INFT, Base {
 
   function safeTransferFrom(
     address own, address rcp, uint tid, bytes memory data
-  ) external payable {
+  ) public payable {
     transferFrom(own, rcp, tid);
     if (rcp.code.length > 0) {
       bytes4 received = INFTRecipient(rcp).onERC721Received(
@@ -120,7 +119,7 @@ abstract contract NFT is INFT, Base {
 
   function safeTransferFrom(address own, address rcp, uint tid)
     external payable {
-    safeTransferFrom(own, rcp, tid, "")
+    safeTransferFrom(own, rcp, tid, "");
   }
 
   function approve(address apr, uint tid) external {
@@ -132,12 +131,12 @@ abstract contract NFT is INFT, Base {
   }
 
   function setApprovalForAll(address opr, bool allow) external {
+    address own = msg.sender;
     if (allow) {
-      address own = msg.sender;
-      require(balanceOf(own) > 0, ErrNothingToApprove(own, opr));
-      ApprovalForAll[own][opr] = allow
+      require(balanceOf[own] > 0, ErrNothingToApprove(own, opr));
+      isApprovedForAll[own][opr] = allow;
     } else {
-      delete ApprovalForAll[own][opr]
+      delete isApprovedForAll[own][opr];
     }
   }
 }
@@ -146,10 +145,10 @@ contract NFToken is NFT {
   constructor(address mnt) NFT(mnt) {}
 
   function mintNFT(address rcp, uint tid) external {
-    mint(rcp, tid)
+    mint(rcp, tid);
   }
 
   function burnNFT(uint tid) external {
-    burn(tid)
+    burn(tid);
   }
 }
