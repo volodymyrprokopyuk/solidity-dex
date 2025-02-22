@@ -138,6 +138,7 @@ abstract contract NFT is INFT, Base {
     } else {
       delete isApprovedForAll[own][opr];
     }
+    emit ApprovalForAll(own, opr, allow);
   }
 }
 
