@@ -32,6 +32,13 @@
 [[https://eips.ethereum.org/EIPS/eip-721][ERC-721 Non-fungible token standard]]
 
 - ERC-721 Non-fungible token :: The ERC-721 Non-fungible token standard
+  describes an interface for implementing the transfer and the ownership
+  recording of non-fungible tokens NTFs. Each NFT represents a distinguishable
+  unique asset. Each NTF is unique and non-interchangeable with other NTFs. Each
+  NFT requires a dedicated record for ownership tracking of the NFT. The NFT
+  standard describes the transfer of NFTs directly by owners, the approval by
+  owners or operators of approved addresses to manage specific NFTs, and the
+  approval by owners of possibly multiple operators to manage all owner NFTs
 
 ** Design and implementation
 
@@ -66,18 +73,19 @@ function balanceOf(address own) external view returns (uint tokNum);
 - Unsafe transfer :: The =transferFrom= function transfers an NFT identified by
   a token ID from the owner to a recipient. Either the owner or an approved
   address for this specific NFT, or an approved operator for all owner NFTs can
-  perform a transfer
+  perform a transfer. The sender is responsible to confirm that the recipient is
+  capable of receiving NTFs, otherwise the NFT may be permanently lost
   #+BEGIN_SRC solidity
 function transferFrom(address own, address rcp, uint tid) external payable;
   #+END_SRC
 
 - Safe transfer :: The =safeTransferFrom= function performs an unsafe transfer
   of an NFT identified by a token ID and calls the =onERC721Received= function
-  on the recipient contract. The function must return the selector of the
-  =onERC721Received= function, otherwise the transfer fails to prevent a
-  potential loss of NFTs sent to recipient contracts that do not implement the
-  NFT recipient interface. The =safeTransferFrom= function emits the =Transfer=
-  event
+  on the recipient contract to confirm the successful transfer. The
+  =onERC721Received= function must return the selector of the =onERC721Received=
+  function, otherwise the transfer fails to prevent a potential loss of NFTs
+  sent to recipient contracts that do not implement the NFT recipient interface.
+  The =safeTransferFrom= function emits the =Transfer= event
   #+BEGIN_SRC solidity
 contract NFTRecipient is INFTRecipient {
   function onERC721Received(address, address, uint, bytes memory)
