@@ -1,0 +1,126 @@
+* ERC-721 Non-fungible token
+:PROPERTIES:
+:TOC: :include descendants
+:END:
+
+:CONTENTS:
+- [[#concepts-and-purpose][Concepts and purpose]]
+  - [[#erc-721-non-fungible-token][ERC-721 Non-fungible token]]
+- [[#design-and-implementation][Design and implementation]]
+  - [[#owner-transfer][Owner transfer]]
+    - [[#events][Events]]
+    - [[#views][Views]]
+    - [[#public-functions][Public functions]]
+  - [[#approved-address-for-a-specific-nft][Approved address for a specific NFT]]
+    - [[#event][Event]]
+    - [[#views][Views]]
+    - [[#public-functions][Public functions]]
+  - [[#approved-operator-for-all-owner-nfts][Approved operator for all owner NFTs]]
+    - [[#events][Events]]
+    - [[#views][Views]]
+    - [[#public-functions][Public functions]]
+- [[#testing-and-usage][Testing and usage]]
+  - [[#testing-nft-contract][Testing NFT contract]]
+:END:
+
+** Concepts and purpose
+
+*** ERC-721 Non-fungible token
+
+[[https://eips.ethereum.org/EIPS/eip-721][ERC-721 Non-fungible token standard]]
+
+- ERC-721 Non-fungible token :: The ERC-721 Non-fungible token standard
+
+** Design and implementation
+
+*** Owner transfer
+
+**** Events
+
+- Transfer :: The =Transfer= event is emitted
+  #+BEGIN_SRC solidity
+event Transfer(address indexed own, address indexed rcp, uint tid);
+  #+END_SRC
+
+**** Views
+
+- NTF owner :: The =ownerOf= view returns
+  #+BEGIN_SRC solidity
+function ownerOf(uint tid) external view returns(address own);
+  #+END_SRC
+
+- Owner balance :: The =balanceOf= view returns
+  #+BEGIN_SRC solidity
+function balanceOf(address own) external view returns (uint tokNum);
+  #+END_SRC
+
+**** Public functions
+
+- Unsafe transfer :: The =transferFrom= function
+  #+BEGIN_SRC solidity
+function transferFrom(address own, address rcp, uint tid) external payable;
+  #+END_SRC
+
+- Safe transfer :: The =safeTransferFrom= function
+  #+BEGIN_SRC solidity
+function safeTransferFrom(
+  address own, address rcp, uint tid, bytes memory data
+) external payable;
+function safeTransferFrom(address own, address rcp, uint tid) external payable;
+  #+END_SRC
+
+*** Approved address for a specific NFT
+
+**** Event
+
+- Approval :: The =Approval= event is emitted
+  #+BEGIN_SRC solidity
+event Approval(address indexed own, address indexed apr, uint tid);
+  #+END_SRC
+
+**** Views
+
+- Approved address for specific NFT :: The =getApproved= view returns
+  #+BEGIN_SRC solidity
+function getApproved(uint tid) external view returns (address apr);
+  #+END_SRC
+
+**** Public functions
+
+- Approve address for specific NFT :: The =approve= function
+  #+BEGIN_SRC solidity
+function approve(address apr, uint tid) external;
+  #+END_SRC
+
+*** Approved operator for all owner NFTs
+
+**** Events
+
+- Approval for all :: The =ApprovalForAll= event is emitted
+  #+BEGIN_SRC solidity
+event ApprovalForAll(address  indexed own, address indexed opr, bool allow);
+  #+END_SRC
+
+**** Views
+
+- Approved operator for all owner NFTs :: The =isApprovedForAll= view returns
+  #+BEGIN_SRC solidity
+function isApprovedForAll(address own, address opr)
+  external view returns (bool allow);
+  #+END_SRC
+
+**** Public functions
+
+- Approve operator for all owner NFTs :: The =setApprovalForAll= function
+  #+BEGIN_SRC solidity
+function setApprovalForAll(address opr, bool allow) external;
+  #+END_SRC
+
+** Testing and usage
+
+*** Testing =NFT= contract
+
+Test the =NFT= contract
+#+BEGIN_SRC nushell
+forge test -vvv --match-contract NFT --match-test .
+#+END_SRC

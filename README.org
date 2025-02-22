@@ -5,6 +5,7 @@
 *** Ethereum ERC
 
 - [[/erc/FungibleToken.org][ERC-20 Fungible token]]
+- [[/erc/NFT.org][ERC-721 Non-fungible token]]
 
 *** Uniswap DEX
 
