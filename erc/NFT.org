@@ -19,6 +19,8 @@
     - [[#events][Events]]
     - [[#views][Views]]
     - [[#public-functions][Public functions]]
+  - [[#mint-and-burn-nfts][Mint and burn NFTs]]
+    - [[#internal-functions][Internal functions]]
 - [[#testing-and-usage][Testing and usage]]
   - [[#testing-nft-contract][Testing NFT contract]]
 :END:
@@ -37,32 +39,53 @@
 
 **** Events
 
-- Transfer :: The =Transfer= event is emitted
+- Transfer :: The =Transfer= event is emitted on a successful transfer on an NFT
+  from the owner to a recipient. The event is also emitted when a new NFT is
+  minted (the owner address is zero), and when an existing NFT is burned (the
+  recipient address is zero)
   #+BEGIN_SRC solidity
 event Transfer(address indexed own, address indexed rcp, uint tid);
   #+END_SRC
 
 **** Views
 
-- NTF owner :: The =ownerOf= view returns
+- NTF owner :: The =ownerOf= view returns the owner address of an NFT identified
+  by a token ID. A zero address is returned for a non-existing token
   #+BEGIN_SRC solidity
 function ownerOf(uint tid) external view returns(address own);
   #+END_SRC
 
-- Owner balance :: The =balanceOf= view returns
+- Owner balance :: The =balanceOf= view returns the number of NFTs owned by an
+  address
   #+BEGIN_SRC solidity
 function balanceOf(address own) external view returns (uint tokNum);
   #+END_SRC
 
 **** Public functions
 
-- Unsafe transfer :: The =transferFrom= function
+- Unsafe transfer :: The =transferFrom= function transfers an NFT identified by
+  a token ID from the owner to a recipient. Either the owner or an approved
+  address for this specific NFT, or an approved operator for all owner NFTs can
+  perform a transfer
   #+BEGIN_SRC solidity
 function transferFrom(address own, address rcp, uint tid) external payable;
   #+END_SRC
 
-- Safe transfer :: The =safeTransferFrom= function
+- Safe transfer :: The =safeTransferFrom= function performs an unsafe transfer
+  of an NFT identified by a token ID and calls the =onERC721Received= function
+  on the recipient contract. The function must return the selector of the
+  =onERC721Received= function, otherwise the transfer fails to prevent a
+  potential loss of NFTs sent to recipient contracts that do not implement the
+  NFT recipient interface. The =safeTransferFrom= function emits the =Transfer=
+  event
   #+BEGIN_SRC solidity
+contract NFTRecipient is INFTRecipient {
+  function onERC721Received(address, address, uint, bytes memory)
+    external pure returns (bytes4) {
+    return NFTRecipient.onERC721Received.selector;
+  }
+}
+
 function safeTransferFrom(
   address own, address rcp, uint tid, bytes memory data
 ) external payable;
@@ -73,21 +96,27 @@ function safeTransferFrom(address own, address rcp, uint tid) external payable;
 
 **** Event
 
-- Approval :: The =Approval= event is emitted
+- Approval :: The =Approval= event is emitted when the owner of an approved
+  operator approve an approved address for a specific NFT identified with a
+  token ID
   #+BEGIN_SRC solidity
 event Approval(address indexed own, address indexed apr, uint tid);
   #+END_SRC
 
 **** Views
 
-- Approved address for specific NFT :: The =getApproved= view returns
+- Approved address for specific NFT :: The =getApproved= view returns an
+  approved address for an NFT identified with a token ID
   #+BEGIN_SRC solidity
 function getApproved(uint tid) external view returns (address apr);
   #+END_SRC
 
 **** Public functions
 
-- Approve address for specific NFT :: The =approve= function
+- Approve address for specific NFT :: The =approve= function allows the owner or
+  an approved operator for all owner NTFs to approve an approved address to
+  transfer a specific NFT owned by the owner. The =approve= function emits the
+  =Approval= event
   #+BEGIN_SRC solidity
 function approve(address apr, uint tid) external;
   #+END_SRC
@@ -96,7 +125,8 @@ function approve(address apr, uint tid) external;
 
 **** Events
 
-- Approval for all :: The =ApprovalForAll= event is emitted
+- Approval for all :: The =ApprovalForAll= event is emitted when the owner
+  approves or removes the approval for an operator to manage all owner NTFs
   #+BEGIN_SRC solidity
 event ApprovalForAll(address  indexed own, address indexed opr, bool allow);
   #+END_SRC
@@ -104,6 +134,7 @@ event ApprovalForAll(address  indexed own, address indexed opr, bool allow);
 **** Views
 
 - Approved operator for all owner NFTs :: The =isApprovedForAll= view returns
+  whether an operator is approved by the owner to manage all owner NTFs
   #+BEGIN_SRC solidity
 function isApprovedForAll(address own, address opr)
   external view returns (bool allow);
@@ -111,9 +142,31 @@ function isApprovedForAll(address own, address opr)
 
 **** Public functions
 
-- Approve operator for all owner NFTs :: The =setApprovalForAll= function
+- Approve operator for all owner NFTs :: The =setApprovalForAll= function allows
+  an owner with a non-zero balance to approve an operator to manage all owner
+  NTFs. The function also allows the owner to remove the approval from an
+  operator. Multiple operators can be approved to manage NTFs of the same owner.
+  The =setApprovalForAll= function emits the =ApprovalForAll= event
   #+BEGIN_SRC solidity
 function setApprovalForAll(address opr, bool allow) external;
+  #+END_SRC
+
+*** Mint and burn NFTs
+
+**** Internal functions
+
+- Mint :: The =mint= function allows only the minter to create a new NFT and
+  transfer the NFT to a recipient. The =mint= function emits the =Transfer=
+  event with the zero owner address
+  #+BEGIN_SRC solidity
+function mint(address rcp, uint tid) internal;
+  #+END_SRC
+
+- Burn :: The =burn= function allows only the minter to destroy an existing NFT
+  owned by an owner. The =burn= function emits the =Transfer= event with the
+  zero recipient address
+  #+BEGIN_SRC solidity
+function burn(uint tid) internal;
   #+END_SRC
 
 ** Testing and usage
