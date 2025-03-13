@@ -15,6 +15,10 @@
   - [[/uniswap-v1/PriceCalculation.html][Uniswap v1 price calculation]] download
     the raw HTML file and open it locally to view mathematical formulae
 
+*** Contracts
+
+- [[/contract/MultiSigWallet.sol][MultiSig wallet]]
+
 * Foundry
 
 - Install Foundry Forge std

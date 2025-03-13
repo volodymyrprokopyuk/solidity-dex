@@ -114,8 +114,8 @@ contract MultiSigWallet is Base {
     onlyOwners(executor);
     txValid(tid);
     txApproved(tid);
-    sufficientFunds(txs[tid].value);
     Tx storage txn = txs[tid];
+    sufficientFunds(txn.value);
     txn.executed = true;
     (bool succ, ) = txn.recipient.call{value: txn.value}("");
     require(succ, ErrTxExecute(tid, executor));

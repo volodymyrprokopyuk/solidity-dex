@@ -25,14 +25,14 @@ contract MultiSigWalletTest is Test {
   function testProposeApproveRevokeExecuteTx() public {
     uint value = 1 ether;
     uint tid = 0;
-    // A transaction proposal fails if the wallet does not have sufficient funds
+    // A transaction proposal fails if the wallet have insufficient funds
     bytes memory err = abi.encodeWithSelector(
       MultiSigWallet.ErrWalletInsufficientFunds.selector, value
     );
     vm.expectRevert(err, address(wallet));
     vm.prank(own1);
     wallet.proposeTx(rcp, value);
-    // An owner propose a transaction if the wallet have sufficient funds
+    // An owner proposes a transaction if the wallet have sufficient funds
     vm.deal(address(wallet), value);
     vm.expectEmit(true, true, false, true, address(wallet));
     emit MultiSigWallet.EvTxPropose(tid, rcp, value);
@@ -50,14 +50,14 @@ contract MultiSigWalletTest is Test {
     vm.expectRevert(err, address(wallet));
     vm.prank(rcp);
     wallet.approveTx(tid);
-    // A not approved transaction fails to execute
+    // The transaction with not enough approvals fails to execute
     err = abi.encodeWithSelector(
       MultiSigWallet.ErrTxNotApproved.selector, tid, address(0)
     );
     vm.expectRevert(err, address(wallet));
     vm.prank(own3);
     wallet.executeTx(tid);
-    // An already approved owner fails to approve again
+    // The owner that already approved the transaction fails to approve it again
     err = abi.encodeWithSelector(
       MultiSigWallet.ErrTxApproved.selector, tid, own1
     );
