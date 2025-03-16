@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.28;
 
-import {Test} from "std/Test.sol";
+import {Test} from "forge/Test.sol";
 import {IFungibleToken, FungibleToken, Token} from "erc/FungibleToken.sol";
 
 contract FungibleTokenTest is Test {
