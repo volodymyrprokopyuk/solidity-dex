@@ -1,6 +1,0 @@
-[submodule "library/forge-std"]
-	path = library/forge-std
-	url = https://github.com/foundry-rs/forge-std
-[submodule "library/chainlink-local"]
-	path = library/chainlink-local
-	url = https://github.com/smartcontractkit/chainlink-local
