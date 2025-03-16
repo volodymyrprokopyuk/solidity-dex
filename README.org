@@ -22,15 +22,11 @@
 * Foundry
 
 - Install Foundry Forge std and Chainlink local
-  #+BEGIN_SRC nushell
-mkdir contract library
-git submodule add https://github.com/foundry-rs/forge-std \
-  ./library/forge-std
-cd library/forge-std; git pull # update
-git submodule add https://github.com/smartcontractkit/chainlink-local \
-  ./library/chainlink-local
+  #+BEGIN_SRC fish
+cd library; and git clone https://github.com/foundry-rs/forge-std.git
+cd library/forge-std/; and git pull # upgrade
   #+END_SRC
 - Test contracts
-  #+BEGIN_SRC nushell
+  #+BEGIN_SRC fish
 forge test -vvv --match-contract reContract --match-test reTest
   #+END_SRC
