@@ -21,10 +21,10 @@
 
 * Foundry
 
-- Install Foundry Forge std and Chainlink local
+- Install Foundry Forge standard library
   #+BEGIN_SRC fish
-cd library; and git clone https://github.com/foundry-rs/forge-std.git
-cd library/forge-std/; and git pull # upgrade
+cd library && git clone https://github.com/foundry-rs/forge-std.git
+cd library/forge-std && git pull # upgrade
   #+END_SRC
 - Test contracts
   #+BEGIN_SRC fish
